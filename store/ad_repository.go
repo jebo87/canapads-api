@@ -46,7 +46,7 @@ func GetAdTitles(offset int, limit int) {
 
 	//execute the query and check for errors
 	rows, err := db.Query(query)
-	checkErr(err)
+	checkErr(err, "panic")
 
 	//define an ad to store the ad coming from the database
 	var ad Ad
@@ -66,7 +66,7 @@ func GetAdTitles(offset int, limit int) {
 			&ad.Rooms,
 			&ad.PropertyType,
 			&ad.UserAdID)
-		checkErr(err)
+		checkErr(err, "panic")
 
 		fmt.Println(AdToString(ad))
 	}
@@ -81,10 +81,7 @@ func InsertAd(ad Ad) {
 	defer db.Close()
 
 	//if there were errors during database opening we log them here.
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	checkErr(err, "fatal")
 	var id int
 
 	//prepare the query statement
@@ -92,15 +89,36 @@ func InsertAd(ad Ad) {
 
 	//execute the statement adding the values from the ad and return the id of the newly created ad
 	err = db.QueryRow(query, ad.Title, ad.Description, ad.City, ad.Country, ad.Price, ad.PublishedDate, ad.Rooms, ad.PropertyType, ad.UserAdID).Scan(&id)
-	checkErr(err)
+	checkErr(err, "panic")
 	fmt.Println(id)
 
 }
 
-func checkErr(err error) {
-	if err != nil {
-		panic(err)
-	}
+//DeleteAd deletes an ad from the database
+func DeleteAd(index int) {
+	//open the connection and store errors in err
+	db, err := sql.Open("postgres", conf.connStr)
+	//defer the database close
+	defer db.Close()
+
+	//if there were errors during database opening we log them here.
+	checkErr(err, "fatal")
+
+	//prepare the query string
+	query := "DELETE FROM ***REMOVED*** where id = $1"
+
+	//execute the query
+	_, err = db.Exec(query, index)
+	checkErr(err, "panic")
+
 }
 
-func hola() {}
+func checkErr(err error, errorType string) {
+	if err != nil {
+		if errorType == "panic" {
+			panic(err)
+		} else if errorType == "fatal" {
+			log.Fatal(err)
+		}
+	}
+}

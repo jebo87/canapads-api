@@ -10,8 +10,9 @@ import (
 func main() {
 	fmt.Println("Loading makako API server...")
 	store.Initialize()
-	//store.GetAdTitles(0, 0)
-	testAddAd()
+	// store.GetAdTitles(0, 0)
+	// testAddAd()
+	store.DeleteAd(9)
 
 }
 
