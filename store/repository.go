@@ -58,3 +58,5 @@ func checkErr(err error) {
 		panic(err)
 	}
 }
+
+func hola() {}
