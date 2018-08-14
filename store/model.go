@@ -1,6 +1,7 @@
 package store
 
 import (
+	"strconv"
 	"time"
 )
 
@@ -20,5 +21,5 @@ type Ad struct {
 
 //AdToString returns a string for the ad
 func AdToString(ad Ad) string {
-	return ad.Title
+	return strconv.Itoa(ad.ID) + " " + ad.Title
 }

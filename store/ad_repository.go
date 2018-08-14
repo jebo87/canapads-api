@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
@@ -17,14 +18,15 @@ type Config struct {
 
 var conf Config
 
-//Initialize used to initialize the configuration for the database
-func Initialize() {
+//InitializeDB used to initialize the configuration for the database
+func InitializeDB() {
 	//connection string for the database
 	conf.connStr = "postgres://postgres:test123@dbads.makakolabs.ca/***REMOVED***?sslmode=disable"
 }
 
-//GetAdTitles this returns all ads
-func GetAdTitles(offset int, limit int) {
+//GetAdTitles this returns the ads.
+//Pagination can be done using offset and limit
+func GetAdTitles(offset int, limit int) []byte {
 
 	//open the connection and store errors in err
 	db, err := sql.Open("postgres", conf.connStr)
@@ -51,6 +53,8 @@ func GetAdTitles(offset int, limit int) {
 	//define an ad to store the ad coming from the database
 	var ad Ad
 
+	ads := make([]Ad, 0)
+
 	//iterate over the results
 	for rows.Next() {
 
@@ -68,8 +72,13 @@ func GetAdTitles(offset int, limit int) {
 			&ad.UserAdID)
 		checkErr(err, "panic")
 
-		fmt.Println(AdToString(ad))
+		//append the ad to the slice
+		ads = append(ads, ad)
+
 	}
+	// convert the slice into a byte array and return it
+	data, _ := json.Marshal(ads)
+	return data
 
 }
 
