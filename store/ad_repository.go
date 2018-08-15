@@ -69,7 +69,11 @@ func GetAdTitles(offset int, limit int) []byte {
 			&ad.PublishedDate,
 			&ad.Rooms,
 			&ad.PropertyType,
-			&ad.UserAdID)
+			&ad.UserAdID,
+			&ad.Pets,
+			&ad.Furnished,
+			&ad.Garages,
+			&ad.RentByOwner)
 		checkErr(err, "panic")
 
 		//append the ad to the slice
@@ -78,6 +82,49 @@ func GetAdTitles(offset int, limit int) []byte {
 	}
 	// convert the slice into a byte array and return it
 	data, _ := json.Marshal(ads)
+	return data
+
+}
+
+//GetAd returns the ad matching given ID
+func GetAd(id string) []byte {
+	//open the connection and store errors in err
+	db, err := sql.Open("postgres", conf.connStr)
+	//defer the database close
+	defer db.Close()
+
+	//if there were errors during database opening we log them here.
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//modify the query depending on the number of ads to display
+	query := "SELECT * FROM ***REMOVED*** WHERE ID=$1"
+
+	row := db.QueryRow(query, id)
+
+	var ad Ad
+	row.Scan(&ad.ID,
+		&ad.Title,
+		&ad.Description,
+		&ad.City,
+		&ad.Country,
+		&ad.Price,
+		&ad.PublishedDate,
+		&ad.Rooms,
+		&ad.PropertyType,
+		&ad.UserAdID,
+		&ad.Pets,
+		&ad.Furnished,
+		&ad.Garages,
+		&ad.RentByOwner)
+
+	if ad.ID == 0 {
+		return nil
+	}
+
+	// convert the ad into a byte array and return it
+	data, _ := json.Marshal(ad)
 	return data
 
 }
@@ -94,10 +141,38 @@ func InsertAd(ad Ad) {
 	var id int
 
 	//prepare the query statement
-	query := "INSERT INTO ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id"
+	query := `INSERT INTO ***REMOVED*** (
+		title,
+		description,
+		city,
+		country,
+		price,
+		published_date,
+		rooms,
+		property_type,
+		userad_id,
+		pets,	
+		furnished,	  
+		garages,		  
+		rent_by_owner   
+		) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`
 
 	//execute the statement adding the values from the ad and return the id of the newly created ad
-	err = db.QueryRow(query, ad.Title, ad.Description, ad.City, ad.Country, ad.Price, ad.PublishedDate, ad.Rooms, ad.PropertyType, ad.UserAdID).Scan(&id)
+	err = db.QueryRow(
+		query,
+		ad.Title,
+		ad.Description,
+		ad.City,
+		ad.Country,
+		ad.Price,
+		ad.PublishedDate,
+		ad.Rooms,
+		ad.PropertyType,
+		ad.UserAdID,
+		ad.Pets,
+		ad.Furnished,
+		ad.Garages,
+		ad.RentByOwner).Scan(&id)
 	checkErr(err, "panic")
 	fmt.Println(id)
 

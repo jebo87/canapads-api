@@ -6,6 +6,7 @@ docker create -v /var/lib/postgresql/data --name postgres-data busybox
 //run the container
 docker run --name postgres_makako -p 5432:5432 -e "POSTGRES_USER=postgres POSTGRES_PASSWORD=test123 POSTGRES_DB:'***REMOVED***'" -d --volumes-from postgres-data postgres
 
+
 //connect to database and see tables
 docker run -it --link postgres_makako:postgres --rm postgres sh -c 'exec psql -h "$POSTGRES_PORT_5432_TCP_ADDR" -p "$POSTGRES_PORT_5432_TCP_PORT" -U postgres -l'
 
@@ -35,3 +36,8 @@ insert into ***REMOVED*** (title,description,city,country,price,publishedDate,ro
 insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 7','Ad Description 7','Montreal','Canada',750,current_date,4,'apartment',1); 
 insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 8','Ad Description 8','Montreal','Canada',3500,current_date,4,'apartment',1); 
 
+
+
+//tutorials
+docker create -v /var/lib/postgresql/data --name postgres-data busybox
+docker run --name postgres -p 5432:5432 -e "POSTGRES_PASSWORD=test123" -d --volumes-from postgres-data postgres

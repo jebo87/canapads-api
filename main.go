@@ -19,6 +19,11 @@ type App struct {
 
 //AdsHandler is the handler for all ads requests
 type AdsHandler struct {
+	AdHandler *AdHandler
+}
+
+//AdHandler is the handler for all ads requests
+type AdHandler struct {
 }
 
 func main() {
@@ -33,7 +38,8 @@ func main() {
 		*port = "8081"
 	}
 	fmt.Println("Loading makako API server...")
-	fmt.Println("Listening on port " + *port + " ...")
+	fmt.Println("Listening on port " + *port + ".")
+	fmt.Println("Application started. Press CTRL+C to shutdown. ")
 
 	//initializes the connection to the database
 	store.InitializeDB()
@@ -51,6 +57,7 @@ func main() {
 
 //ServeHTTP for the App
 func (h *App) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+
 	var head string
 	head, req.URL.Path = ShiftPath(req.URL.Path)
 	if head == "ads" {
@@ -63,10 +70,21 @@ func (h *App) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 //ServeHTTP for the Ads
 func (h *AdsHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+	var head string
+	head, _ = ShiftPath(req.URL.Path)
+	//validate if there is an actual id
+	if id, _ := strconv.Atoi(head); id != 0 {
+		//if there is and ID then the AdHandler
+		//should take care of bringing that specific ad
+		h.AdHandler.ServeHTTP(res, req)
+		return
+	}
 
+	//check if there is an offset and a limit in the query parameters.
 	offset, errOffset := strconv.Atoi(req.URL.Query().Get("offset"))
 	limit, errLimit := strconv.Atoi(req.URL.Query().Get("limit"))
 
+	//default to zero if offset or limit are not set
 	if errOffset != nil {
 		offset = 0
 	}
@@ -76,6 +94,7 @@ func (h *AdsHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 	switch req.Method {
 	case "GET":
+		fmt.Println("loading ads, request from " + req.RemoteAddr)
 		res.Write(store.GetAdTitles(offset, limit))
 	default:
 		http.Error(res, "Only GET is allowed", http.StatusMethodNotAllowed)
@@ -83,6 +102,21 @@ func (h *AdsHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	}
 	return
 
+}
+
+//ServeHTTP for one Ad
+func (h *AdHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+	var head string
+	head, req.URL.Path = ShiftPath(req.URL.Path)
+	switch req.Method {
+	case "GET":
+		fmt.Println("loading ad " + head)
+		res.Write(store.GetAd(head))
+	default:
+		http.Error(res, "Only GET is allowed", http.StatusMethodNotAllowed)
+
+	}
+	return
 }
 
 //ShiftPath returns the head of the URL without initial slash '/' and the rest of the URL

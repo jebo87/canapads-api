@@ -17,6 +17,10 @@ type Ad struct {
 	Rooms         int
 	PropertyType  string
 	UserAdID      int
+	Pets          bool
+	Furnished     bool
+	Garages       int
+	RentByOwner   bool
 }
 
 //AdToString returns a string for the ad
