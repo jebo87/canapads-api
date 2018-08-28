@@ -12,7 +12,7 @@ docker run -it --link postgres_makako:postgres --rm postgres sh -c 'exec psql -h
 
 
 //SQL
-insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 1','Ad Description 1','Montreal','Canada',2000,GETDATE(),4,'apartment',1); 
+insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 1','Ad Description 1','Montreal','Canada',2000,GETDATE(),4,'apartment',1,false,false,0,false); 
 
 CREATE TABLE ***REMOVED*** (
     id        SERIAL PRIMARY KEY,
@@ -27,14 +27,14 @@ CREATE TABLE ***REMOVED*** (
     useradid integer
 );
 
-insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 1','Ad Description 1','Montreal','Canada',2000,current_date,4,'apartment',1); 
-insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 2','Ad Description 2','Montreal','Canada',3000,current_date,4,'apartment',1); 
-insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 3','Ad Description 3','Montreal','Canada',700,current_date,4,'apartment',1); 
-insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 4','Ad Description 4','Montreal','Canada',2500,current_date,4,'apartment',1); 
-insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 5','Ad Description 5','Montreal','Canada',1200,current_date,4,'apartment',1); 
-insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 6','Ad Description 6','Montreal','Canada',800,current_date,4,'apartment',1); 
-insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 7','Ad Description 7','Montreal','Canada',750,current_date,4,'apartment',1); 
-insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 8','Ad Description 8','Montreal','Canada',3500,current_date,4,'apartment',1); 
+insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 1','Ad Description 1','Montreal','Canada',2000,current_date,4,'apartment',1,false,false,0,false); 
+insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 2','Ad Description 2','Montreal','Canada',3000,current_date,4,'apartment',1,false,false,0,false); 
+insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 3','Ad Description 3','Montreal','Canada',700,current_date,4,'apartment',1,false,false,0,false); 
+insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 4','Ad Description 4','Montreal','Canada',2500,current_date,4,'apartment',1,false,false,0,false); 
+insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 5','Ad Description 5','Montreal','Canada',1200,current_date,4,'apartment',1,false,false,0,false); 
+insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 6','Ad Description 6','Montreal','Canada',800,current_date,4,'apartment',1,false,false,0,false); 
+insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 7','Ad Description 7','Montreal','Canada',750,current_date,4,'apartment',1,false,false,0,false); 
+insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 8','Ad Description 8','Montreal','Canada',3500,current_date,4,'apartment',1,false,false,0,false); 
 
 
 
