@@ -48,7 +48,7 @@ func main() {
 		AdsHandler: new(AdsHandler),
 	}
 
-	http.ListenAndServe(":"+*port, app)
+	http.ListenAndServe("localhost:"+*port, app)
 
 	// testAddAd()
 	//store.DeleteAd(9)
@@ -70,6 +70,7 @@ func (h *App) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 //ServeHTTP for the Ads
 func (h *AdsHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+	enableCors(&res)
 	var head string
 	head, _ = ShiftPath(req.URL.Path)
 	//validate if there is an actual id
@@ -128,6 +129,13 @@ func ShiftPath(p string) (head, tail string) {
 	}
 	return p[1:i], p[i:]
 }
+
+
+
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
+}
+
 
 func testAddAd() {
 	var ad store.Ad
