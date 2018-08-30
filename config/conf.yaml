@@ -1,0 +1,15 @@
+postgres:
+  host: 192.168.99.100
+  port: 5432
+  dbname: ***REMOVED***
+  user: postgres
+  password: test123
+  sslmode: disable
+dbinfo:
+  table: ***REMOVED***
+  schema: public
+  monitor: go_postgres_monitor
+  
+  
+
+

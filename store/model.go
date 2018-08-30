@@ -21,6 +21,9 @@ type Ad struct {
 	Furnished     bool
 	Garages       int
 	RentByOwner   bool
+	Published     bool
+	LastUpdated   time.Time
+	Images        []string
 }
 
 //AdToString returns a string for the ad
