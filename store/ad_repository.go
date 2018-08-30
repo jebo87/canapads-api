@@ -2,7 +2,7 @@ package store
 
 import (
 	"database/sql"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -68,7 +68,9 @@ func loadConfig() (conf Config) {
 
 }
 
-func TimeDate(pdate *ads.Date, fecha time.Time) *ads.Date {
+//parseDate parses the date coming from the database to a format
+//compatible with protobuffers
+func parseDate(pdate *ads.Date, fecha time.Time) *ads.Date {
 	pdate = &ads.Date{}
 	pdate.Year = int32(fecha.Year())
 
@@ -81,9 +83,9 @@ func TimeDate(pdate *ads.Date, fecha time.Time) *ads.Date {
 
 //GetAdListPB this returns the ads.
 //Pagination can be done using offset and limit
-func GetAdListPB(offset int, limit int) *ads.AdList {
+func GetAdListPB(offset int, limit int) (*ads.AdList, error) {
 
-	var adList ads.AdList
+	adList := &ads.AdList{}
 
 	//open the connection and store errors in err
 	db, err := sql.Open("postgres", connInfo)
@@ -112,11 +114,10 @@ func GetAdListPB(offset int, limit int) *ads.AdList {
 	public.***REMOVED***.garages, 
 	public.***REMOVED***.rent_by_owner, 
 	public.***REMOVED***.published,
-	
+	public.***REMOVED***.last_updated,
 	array_agg(public.ad_images.path) as images 
 	FROM public.***REMOVED*** 
 	LEFT OUTER JOIN public.ad_images ON (public.***REMOVED***.id = public.ad_images.ad_id) 
-	WHERE ***REMOVED***.last_updated > (SELECT last_update from public.go_postgres_monitor)
 	GROUP BY public.***REMOVED***.id
 	ORDER BY ***REMOVED***.last_updated ASC`
 
@@ -128,15 +129,17 @@ func GetAdListPB(offset int, limit int) *ads.AdList {
 
 	//execute the query and check for errors
 	rows, err := db.Query(query)
-	checkErr(err, "panic")
+	if err != nil {
+		return nil, err
+	}
 
 	//define an ad to store the ad coming from the database
-	var ad ads.Ad
-	var myTime time.Time
 
+	var myTime time.Time
+	adList.Ads = []*ads.Ad{}
 	//iterate over the results
 	for rows.Next() {
-
+		var ad ads.Ad
 		//use a pointer to store the title.
 		err = rows.Scan(
 			&ad.Id,
@@ -154,117 +157,24 @@ func GetAdListPB(offset int, limit int) *ads.AdList {
 			&ad.Garages,
 			&ad.RentByOwner,
 			&ad.Published,
+			&ad.LastUpdated,
 
 			(*pq.StringArray)(&ad.Images))
-		checkErr(err, "panic")
-
-		ad.PublishedDate = TimeDate(ad.PublishedDate, myTime)
+		if err != nil {
+			return nil, err
+		}
+		ad.PublishedDate = parseDate(ad.PublishedDate, myTime)
 
 		adList.Ads = append(adList.Ads, &ad)
 
 	}
 
-	// convert the slice into a byte array and return it
-	// data, _ := json.Marshal(adList)
-
-	return &adList
-
-}
-
-// func mapAd(ad *Ad, protoAd *ads.Ad) *ads.Ad {
-// 	protoAd.Id = int32(ad.ID)
-
-// 	protoAd.Title = ad.Title
-// 	protoAd.Description = ad.Description
-// 	protoAd.City = ad.City
-// 	protoAd.Country = ad.Country
-// 	protoAd.Price = int32(ad.Price
-// 	protoAd.PublishedDate = ads.ad.PublishedDate.
-// 	protoAd.Rooms = ad.Rooms
-// 	protoAd.PropertyType = ad.PropertyType
-// 	protoAd.UserAdID = ad.UserAdID
-// 	protoAd.Pets = ad.Pets
-// 	protoAd.Furnished = ad.Furnished
-// 	protoAd.Garages = ad.Garages
-// 	protoAd.RentByOwner = ad.RentByOwner
-// 	protoAd.Published = ad.Published
-// 	protoAd.LastUpdated = ad.LastUpdated
-// }
-
-//GetAdList this returns the ads.
-//Pagination can be done using offset and limit
-func GetAdList(offset int, limit int) []byte {
-
-	//open the connection and store errors in err
-	db, err := sql.Open("postgres", connInfo)
-
-	//defer the database close
-	defer db.Close()
-
-	//if there were errors during database opening we log them here.
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	//modify the query depending on the number of ads to display
-	query := `SELECT public.***REMOVED***.*, array_agg(public.ad_images.path) as images 
-	FROM public.***REMOVED*** 
-	LEFT OUTER JOIN public.ad_images ON (public.***REMOVED***.id = public.ad_images.ad_id) 
-	WHERE ***REMOVED***.last_updated > (SELECT last_update from public.go_postgres_monitor)
-	GROUP BY public.***REMOVED***.id
-	ORDER BY ***REMOVED***.last_updated ASC`
-	if limit == 0 {
-		query += " offset " + strconv.Itoa(offset)
-	} else if limit != 0 {
-		query += " limit " + strconv.Itoa(limit) + " offset " + strconv.Itoa(offset)
-	}
-
-	//execute the query and check for errors
-	rows, err := db.Query(query)
-	checkErr(err, "panic")
-
-	//define an ad to store the ad coming from the database
-	var ad Ad
-
-	ads := make([]Ad, 0)
-
-	//iterate over the results
-	for rows.Next() {
-
-		//use a pointer to store the title.
-		err = rows.Scan(
-			&ad.ID,
-			&ad.Title,
-			&ad.Description,
-			&ad.City,
-			&ad.Country,
-			&ad.Price,
-			&ad.PublishedDate,
-			&ad.Rooms,
-			&ad.PropertyType,
-			&ad.UserAdID,
-			&ad.Pets,
-			&ad.Furnished,
-			&ad.Garages,
-			&ad.RentByOwner,
-			&ad.Published,
-			&ad.LastUpdated,
-			(*pq.StringArray)(&ad.Images))
-		checkErr(err, "panic")
-
-		//append the ad to the slice
-		ads = append(ads, ad)
-
-	}
-	// convert the slice into a byte array and return it
-	data, _ := json.Marshal(ads)
-
-	return data
+	return adList, nil
 
 }
 
 //GetAd returns the ad matching given ID
-func GetAd(id string) []byte {
+func GetAdPB(id string) (*ads.Ad, error) {
 	//open the connection and store errors in err
 	db, err := sql.Open("postgres", connInfo)
 	//defer the database close
@@ -276,33 +186,61 @@ func GetAd(id string) []byte {
 	}
 
 	//modify the query depending on the number of ads to display
-	query := "SELECT * FROM ***REMOVED*** WHERE ID=$1"
+	query := `SELECT public.***REMOVED***.id, 
+	public.***REMOVED***.title, 
+	public.***REMOVED***.description, 
+	public.***REMOVED***.city, 
+	public.***REMOVED***.country, 
+	public.***REMOVED***.price, 
+	public.***REMOVED***.last_updated, 
+	public.***REMOVED***.rooms, 
+	public.***REMOVED***.property_type, 
+	public.***REMOVED***.userad_id, 
+	public.***REMOVED***.pets, 
+	public.***REMOVED***.furnished, 
+	public.***REMOVED***.garages, 
+	public.***REMOVED***.rent_by_owner, 
+	public.***REMOVED***.published,
+	public.***REMOVED***.last_updated,
+	array_agg(public.ad_images.path) as images 
+	FROM public.***REMOVED*** 
+	LEFT OUTER JOIN public.ad_images ON (public.***REMOVED***.id = public.ad_images.ad_id) 
+	WHERE  public.***REMOVED***.id = $1
+	GROUP BY public.***REMOVED***.id
+	ORDER BY ***REMOVED***.last_updated ASC`
 
 	row := db.QueryRow(query, id)
-
-	var ad Ad
-	row.Scan(&ad.ID,
+	var myTime time.Time
+	var ad ads.Ad
+	row.Scan(&ad.Id,
 		&ad.Title,
 		&ad.Description,
 		&ad.City,
 		&ad.Country,
 		&ad.Price,
-		&ad.PublishedDate,
+		&myTime,
 		&ad.Rooms,
 		&ad.PropertyType,
-		&ad.UserAdID,
+		&ad.UserdadId,
 		&ad.Pets,
 		&ad.Furnished,
 		&ad.Garages,
-		&ad.RentByOwner)
+		&ad.RentByOwner,
+		&ad.Published,
+		&ad.LastUpdated,
 
-	if ad.ID == 0 {
-		return nil
+		(*pq.StringArray)(&ad.Images))
+
+	checkErr(err, "panic")
+
+	ad.PublishedDate = parseDate(ad.PublishedDate, myTime)
+
+	if ad.Id == 0 {
+
+		return &ad, errors.New("Ad not found")
 	}
 
-	// convert the ad into a byte array and return it
-	data, _ := json.Marshal(ad)
-	return data
+	return &ad, err
 
 }
 

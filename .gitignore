@@ -49,3 +49,9 @@ builds/**/images/*
 # security / ssl
 *.pem
 *.xxjson
+
+#debug
+debug
+
+#.bak
+*.bak

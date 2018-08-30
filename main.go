@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"net"
 
@@ -37,18 +36,15 @@ func main() {
 }
 
 func (adsServer) AdDetail(ctx context.Context, text *ads.Text) (ad *ads.Ad, err error) {
+	adFromDB, err := store.GetAdPB(text.Text)
 
-	err = json.Unmarshal(store.GetAd(text.Text), &ad)
-	if err != nil {
-		return nil, err
-	}
-	return
+	return adFromDB, err
 
 }
 
 func (adsServer) List(ctx context.Context, void *ads.Void) (*ads.AdList, error) {
-
-	return store.GetAdListPB(0, 0), nil
+	ads, err := store.GetAdListPB(0, 0)
+	return ads, err
 
 }
 
