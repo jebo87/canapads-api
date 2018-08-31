@@ -41,3 +41,20 @@ insert into ***REMOVED*** (title,description,city,country,price,publishedDate,ro
 //tutorials
 docker create -v /var/lib/postgresql/data --name postgres-data busybox
 docker run --name postgres -p 5432:5432 -e "POSTGRES_PASSWORD=test123" -d --volumes-from postgres-data postgres
+get IP from docker container $(docker inspect --format '{{ .NetworkSettings.IPAddress }}' container_name);
+
+//consul
+
+curl -X PUT --data-binary @web.json http://localhost:8500/v1/agent/service/register
+{
+  "ID": "makako-gateway",
+  "Name": "makako-gateway",
+  "Address": "192.168.99.1",
+  "Port": 80,
+  "check": {
+    "http": "192.168.99.1",
+    "interval": "10s",
+    "timeout": "1s"
+   }
+}
+

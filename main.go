@@ -26,24 +26,34 @@ func main() {
 
 	// create a gRPC server object
 	grpcServer := grpc.NewServer()
-	// attach the Ping service to the server
+	log.Println("Creating gRPC server...")
+	// attach the ads service to the server
 	ads.RegisterAdsServer(grpcServer, &adsSer)
+	log.Println("Attaching ads service..")
+
 	// start the server
+	log.Println("Serving and waiting for connections...")
 	if err := grpcServer.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %s", err)
 	}
-
 }
 
 func (adsServer) AdDetail(ctx context.Context, text *ads.Text) (ad *ads.Ad, err error) {
+	log.Println("AdDetail: gRPC connection for adDetail ID: ", text.Text)
 	adFromDB, err := store.GetAdPB(text.Text)
-
+	log.Println("AdDetail: Sending response")
 	return adFromDB, err
 
 }
 
 func (adsServer) List(ctx context.Context, void *ads.Void) (*ads.AdList, error) {
-	ads, err := store.GetAdListPB(0, 0)
+	log.Println("List: loading ads..")
+	//from database:
+	// ads, err := store.GetAdListPB(0, 0)
+
+	//from elastic search
+	ads, err := store.GetAdListElastic(0, 0)
+	log.Println("List: Ads loaded ")
 	return ads, err
 
 }

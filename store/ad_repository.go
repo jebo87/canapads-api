@@ -2,10 +2,12 @@ package store
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -68,16 +70,62 @@ func loadConfig() (conf Config) {
 
 }
 
-//parseDate parses the date coming from the database to a format
-//compatible with protobuffers
-func parseDate(pdate *ads.Date, fecha time.Time) *ads.Date {
-	pdate = &ads.Date{}
-	pdate.Year = int32(fecha.Year())
+type elasticSearch struct {
+	Took     int  `json:"took"`
+	TimedOut bool `json:"timed_out"`
+	Shards   struct {
+		Total      int `json:"total"`
+		Successful int `json:"succesful"`
+		Skipped    int `json:"skipped"`
+		Failed     int `json:"failed"`
+	} `json:"_shards"`
+	Hits struct {
+		Total    int     `json:"total"`
+		MaxScore float32 `json:"max_score"`
+		Hits     []struct {
+			Index  string  `json:"_index"`
+			Type   string  `json:"_type"`
+			ID     string  `json:"_id"`
+			Score  float32 `json:"_score"`
+			Source Ad      `json:"_source"`
+		} `json:"hits"`
+	} `json:"hits"`
+}
 
-	pdate.Month = int32(fecha.Month())
-	pdate.Day = int32(fecha.Day())
+//GetAdListElastic this returns the ads.
+//Pagination can be done using offset and limit
+func GetAdListElastic(offset int, limit int) (*ads.AdList, error) {
+	adList := &ads.AdList{}
+	//get the results from elastic search
+	//this needs to be changed for POST using the query parameters.
+	resp, err := http.Get("http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_search")
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	log.Println("Connected to Elastic...")
+	//create a struct to hold the values from the response
+	results := &elasticSearch{}
 
-	return pdate
+	body, err := ioutil.ReadAll(resp.Body)
+	log.Println("Reading response from Elastic...")
+
+	err = json.Unmarshal(body, &results)
+	if err != nil {
+		panic(err)
+	}
+
+	adList.Ads = []*ads.Ad{}
+	log.Println("Translating ads to protobuf...")
+	//convert the ads to protobuf and add them to the adList that will be returned
+	for _, ad := range results.Hits.Hits {
+		adPB := &ads.Ad{}
+		adPB = ToProto(ad.Source, adPB)
+		adList.Ads = append(adList.Ads, adPB)
+
+	}
+	log.Println("done!")
+	return adList, nil
 
 }
 
@@ -163,7 +211,7 @@ func GetAdListPB(offset int, limit int) (*ads.AdList, error) {
 		if err != nil {
 			return nil, err
 		}
-		ad.PublishedDate = parseDate(ad.PublishedDate, myTime)
+		ad.PublishedDate = parseDate(ad.PublishedDate, &myTime)
 
 		adList.Ads = append(adList.Ads, &ad)
 
@@ -233,7 +281,7 @@ func GetAdPB(id string) (*ads.Ad, error) {
 
 	checkErr(err, "panic")
 
-	ad.PublishedDate = parseDate(ad.PublishedDate, myTime)
+	ad.PublishedDate = parseDate(ad.PublishedDate, &myTime)
 
 	if ad.Id == 0 {
 
