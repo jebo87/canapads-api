@@ -53,6 +53,8 @@ func (adsServer) List(ctx context.Context, void *ads.Void) (*ads.AdList, error) 
 
 	//from elastic search
 	ads, err := store.GetAdListElastic(0, 0)
+	log.Println("printing from List in main:")
+	log.Println(ads.Ads)
 	log.Println("List: Ads loaded ")
 	return ads, err
 

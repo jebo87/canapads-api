@@ -27,6 +27,16 @@ type Ad struct {
 	RentByOwner   bool     `json:"rent_by_owner"`
 	Published     bool     `json:"published"`
 	LastUpdated   string   `json:"last_updated"`
+	Featured      int      `json:"featured"`
+	Lat           string   `json:"lat"`
+	Lon           string   `json:"lon"`
+	Bathrooms     int      `json:"bathrooms"`
+	ViewCount     int      `json:"view_count"`
+	Street        string   `json:"street"`
+	PostalCode    string   `json:"postal_code"`
+	StateProvince string   `json:"state_province"`
+	Neighborhood  string   `json:"neighborhood"`
+	HouseNumber   string   `json:"house_number"`
 	Images        []string `json:"images"`
 }
 
@@ -63,7 +73,15 @@ func ToProto(ad Ad, pb *ads.Ad) *ads.Ad {
 	pb.Garages = int32(ad.Garages)
 	pb.RentByOwner = ad.RentByOwner
 	pb.Published = ad.Published
-	pb.LastUpdated = ad.LastUpdated
+	pb.Featured = int32(ad.Featured)
+	pb.Lat = ad.Lat
+	pb.Lon = ad.Lon
+	pb.Bathrooms = int32(ad.Bathrooms)
+	pb.ViewCount = int32(ad.ViewCount)
+	pb.Street = ad.Street
+	pb.PostalCode = ad.PostalCode
+	pb.Neighborhood = ad.Neighborhood
+	pb.HouseNumber = ad.HouseNumber
 	pb.Images = ad.Images
 
 	return pb

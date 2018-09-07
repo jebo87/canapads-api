@@ -206,11 +206,22 @@ func GetAdListPB(offset int, limit int) (*ads.AdList, error) {
 			&ad.RentByOwner,
 			&ad.Published,
 			&ad.LastUpdated,
+			&ad.Featured,
+			&ad.Lat,
+			&ad.Lon,
+			&ad.Bathrooms,
+			&ad.ViewCount,
+			&ad.Street,
+			&ad.PostalCode,
+			&ad.StateProvince,
+			&ad.Neighborhood,
+			&ad.HouseNumber,
 
 			(*pq.StringArray)(&ad.Images))
 		if err != nil {
 			return nil, err
 		}
+
 		ad.PublishedDate = parseDate(ad.PublishedDate, &myTime)
 
 		adList.Ads = append(adList.Ads, &ad)
@@ -250,6 +261,16 @@ func GetAdPB(id string) (*ads.Ad, error) {
 	public.***REMOVED***.rent_by_owner, 
 	public.***REMOVED***.published,
 	public.***REMOVED***.last_updated,
+	public.***REMOVED***.featured,
+	public.***REMOVED***.lat,
+	public.***REMOVED***.lon,
+	public.***REMOVED***.bathrooms,
+	public.***REMOVED***.view_count,
+	public.***REMOVED***.street,
+	public.***REMOVED***.postal_code,
+	public.***REMOVED***.state_province,
+	public.***REMOVED***.neighborhood,
+	public.***REMOVED***.house_number,
 	array_agg(public.ad_images.path) as images 
 	FROM public.***REMOVED*** 
 	LEFT OUTER JOIN public.ad_images ON (public.***REMOVED***.id = public.ad_images.ad_id) 
@@ -276,7 +297,16 @@ func GetAdPB(id string) (*ads.Ad, error) {
 		&ad.RentByOwner,
 		&ad.Published,
 		&ad.LastUpdated,
-
+		&ad.Featured,
+		&ad.Lat,
+		&ad.Lon,
+		&ad.Bathrooms,
+		&ad.ViewCount,
+		&ad.Street,
+		&ad.PostalCode,
+		&ad.StateProvince,
+		&ad.Neighborhood,
+		&ad.HouseNumber,
 		(*pq.StringArray)(&ad.Images))
 
 	checkErr(err, "panic")
