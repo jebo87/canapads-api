@@ -4,7 +4,7 @@ docker create -v /var/lib/postgresql/data --name postgres-data busybox
 
 
 //run the container
-docker run --name postgres_makako -p 5432:5432 -e "POSTGRES_USER=postgres POSTGRES_PASSWORD=test123 POSTGRES_DB:'***REMOVED***'" -d --volumes-from postgres-data postgres
+docker run --name postgres_makako -p 5432:5432 -e "POSTGRES_USER=***REMOVED*** POSTGRES_PASSWORD=***REMOVED*** POSTGRES_DB:'***REMOVED***'" -d --volumes-from postgres-data postgres
 
 
 //connect to database and see tables
@@ -12,30 +12,45 @@ docker run -it --link postgres_makako:postgres --rm postgres sh -c 'exec psql -h
 
 
 //SQL
-insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 1','Ad Description 1','Montreal','Canada',2000,GETDATE(),4,'apartment',1,false,false,0,false); 
-
 CREATE TABLE ***REMOVED*** (
-    id        SERIAL PRIMARY KEY,
-    title       varchar(255) NOT NULL,
+	id        SERIAL PRIMARY KEY,
+ 
+ 	title       varchar(255) NOT NULL,
     description        text NOT NULL,
     city    varchar(255) NOT NULL,
     country        varchar(10) NOT NULL,
     price         integer NOT NULL,
-    publishedDate date NOT NULL,
+    published_date date NOT NULL,
     rooms int,
-    property_type varchar(255)
-    useradid integer
+    property_type varchar(255),
+    userad_id integer,
+	pets integer,
+	furnished boolean,
+	garages integer,
+	rent_by_owner boolean,
+	published boolean ,
+	featured integer,
+	lat float,
+	lon float,
+	bathrooms integer,
+	view_count integer,
+	house_number varchar(20),
+	street varchar(250),
+	postal_code varchar(250),
+	state_province varchar(250) ,
+	neighborhood varchar (250),
+	pool boolean,
+	gym boolean
+	
+	
 );
 
-insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 1','Ad Description 1','Montreal','Canada',2000,current_date,4,'apartment',1,false,false,0,false); 
-insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 2','Ad Description 2','Montreal','Canada',3000,current_date,4,'apartment',1,false,false,0,false); 
-insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 3','Ad Description 3','Montreal','Canada',700,current_date,4,'apartment',1,false,false,0,false); 
-insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 4','Ad Description 4','Montreal','Canada',2500,current_date,4,'apartment',1,false,false,0,false); 
-insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 5','Ad Description 5','Montreal','Canada',1200,current_date,4,'apartment',1,false,false,0,false); 
-insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 6','Ad Description 6','Montreal','Canada',800,current_date,4,'apartment',1,false,false,0,false); 
-insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 7','Ad Description 7','Montreal','Canada',750,current_date,4,'apartment',1,false,false,0,false); 
-insert into ***REMOVED*** (title,description,city,country,price,publishedDate,rooms,property_type,useradid) values ('Ad Title 8','Ad Description 8','Montreal','Canada',3500,current_date,4,'apartment',1,false,false,0,false); 
+CREATE TABLE ad_images(
+	id        SERIAL PRIMARY KEY,
+	ad_id	integer references ***REMOVED***(id),
+	path varchar(500)
 
+)
 
 
 //tutorials

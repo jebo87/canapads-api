@@ -3,17 +3,23 @@ package main
 import (
 	"log"
 	"net"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"golang.org/x/net/context"
 
 	"bitbucket.org/jebo87/makako-api/store"
 	"bitbucket.org/jebo87/makako-grpc/ads"
+
 	"google.golang.org/grpc"
 )
 
 type adsServer struct{}
 
 func main() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	store.InitializeDB()
 
 	// create a listener on TCP port 7777
@@ -32,10 +38,14 @@ func main() {
 	log.Println("Attaching ads service..")
 
 	// start the server
-	log.Println("Serving and waiting for connections...")
-	if err := grpcServer.Serve(listener); err != nil {
-		log.Fatalf("failed to serve: %s", err)
-	}
+	log.Println("Serving and waiting for connections in port 7777...")
+	go func() {
+		if err := grpcServer.Serve(listener); err != nil {
+			log.Fatalf("failed to serve: %s", err)
+		}
+	}()
+
+	<-c
 }
 
 func (adsServer) AdDetail(ctx context.Context, text *ads.Text) (ad *ads.Ad, err error) {
@@ -53,8 +63,8 @@ func (adsServer) List(ctx context.Context, void *ads.Void) (*ads.AdList, error) 
 
 	//from elastic search
 	ads, err := store.GetAdListElastic(0, 0)
-	log.Println("printing from List in main:")
-	log.Println(ads.Ads)
+	// log.Println("printing from List in main:")
+	// log.Println(ads.Ads)
 	log.Println("List: Ads loaded ")
 	return ads, err
 

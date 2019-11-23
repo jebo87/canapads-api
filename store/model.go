@@ -21,7 +21,7 @@ type Ad struct {
 	Rooms         int      `json:"rooms"`
 	PropertyType  string   `json:"property_type"`
 	UserAdID      int      `json:"userad_id"`
-	Pets          bool     `json:"pets"`
+	Pets          int      `json:"pets"`
 	Furnished     bool     `json:"furnished"`
 	Garages       int      `json:"garages"`
 	RentByOwner   bool     `json:"rent_by_owner"`
@@ -37,6 +37,8 @@ type Ad struct {
 	StateProvince string   `json:"state_province"`
 	Neighborhood  string   `json:"neighborhood"`
 	HouseNumber   string   `json:"house_number"`
+	Gym           bool     `json:"gym"`
+	Pool          bool     `json:"pool"`
 	Images        []string `json:"images"`
 }
 
@@ -68,7 +70,7 @@ func ToProto(ad Ad, pb *ads.Ad) *ads.Ad {
 	pb.PublishedDate = myDate
 	pb.Rooms = int32(ad.Rooms)
 	pb.UserdadId = int32(ad.UserAdID)
-	pb.Pets = ad.Pets
+	pb.Pets = int32(ad.Pets)
 	pb.Furnished = ad.Furnished
 	pb.Garages = int32(ad.Garages)
 	pb.RentByOwner = ad.RentByOwner
@@ -82,8 +84,12 @@ func ToProto(ad Ad, pb *ads.Ad) *ads.Ad {
 	pb.PostalCode = ad.PostalCode
 	pb.Neighborhood = ad.Neighborhood
 	pb.HouseNumber = ad.HouseNumber
+	pb.Gym = ad.Gym
+	pb.Pool = ad.Pool
 	pb.Images = ad.Images
-
+	log.Println(pb)
+	log.Println("**************************************")
+	log.Println(ad)
 	return pb
 }
 

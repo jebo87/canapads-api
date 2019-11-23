@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -11,8 +12,10 @@ import (
 	"strconv"
 	"time"
 
-	"bitbucket.org/jebo87/makako-grpc/ads"
+	//"bitbucket.org/jebo87/makako-grpc/ads"
+	//"bitbucket.org/jebo/go-postgres-monitor"
 
+	"bitbucket.org/jebo87/makako-grpc/ads"
 	"github.com/lib/pq"
 
 	//database
@@ -41,6 +44,7 @@ type Config struct {
 	}
 }
 
+var deployedFlag *bool
 var conf Config
 var connInfo string
 
@@ -57,7 +61,16 @@ func InitializeDB() {
 
 //loadConfig loads the configuration from a yaml file
 func loadConfig() (conf Config) {
-	configFile, err := ioutil.ReadFile("config/conf.yaml")
+	deployedFlag = flag.Bool("deployed", false, "Defines if absolute paths need to be used for the config files")
+	var configFile []byte
+	var err error
+	flag.Parse()
+
+	if *deployedFlag {
+		configFile, err = ioutil.ReadFile("/makako-api/bin/config/conf.yaml")
+	} else {
+		configFile, err = ioutil.ReadFile("config/conf.yaml")
+	}
 	if err != nil {
 		panic(err)
 	}
@@ -98,7 +111,7 @@ func GetAdListElastic(offset int, limit int) (*ads.AdList, error) {
 	adList := &ads.AdList{}
 	//get the results from elastic search
 	//this needs to be changed for POST using the query parameters.
-	resp, err := http.Get("http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_search")
+	resp, err := http.Get("http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_search?scroll=1m&size=100")
 	if err != nil {
 		panic(err)
 	}
@@ -111,6 +124,8 @@ func GetAdListElastic(offset int, limit int) (*ads.AdList, error) {
 	log.Println("Reading response from Elastic...")
 
 	err = json.Unmarshal(body, &results)
+	// log.Println("printing from ad repository ads got from elastic")
+	// log.Println(string(body))
 	if err != nil {
 		panic(err)
 	}
@@ -232,7 +247,7 @@ func GetAdListPB(offset int, limit int) (*ads.AdList, error) {
 
 }
 
-//GetAd returns the ad matching given ID
+//GetAdPB returns the ad matching given ID
 func GetAdPB(id string) (*ads.Ad, error) {
 	//open the connection and store errors in err
 	db, err := sql.Open("postgres", connInfo)

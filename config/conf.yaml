@@ -1,17 +1,15 @@
 postgres:
-  host: dbads.makakolabs.ca
-  port: 5432
+  host: 192.168.2.200
+  port: ***REMOVED***
   dbname: ***REMOVED***
-  user: postgres
-  password: test123
+  user: ***REMOVED***
+  password: ***REMOVED***
   sslmode: disable
 dbinfo:
   table: ***REMOVED***
   schema: public
   monitor: go_postgres_monitor
 elastic:
-  host: elastic.makakolabs.ca
+  host: 192.168.2.200
   port: 9200
   
-
-
