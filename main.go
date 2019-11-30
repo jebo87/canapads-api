@@ -51,6 +51,7 @@ func main() {
 func (adsServer) AdDetail(ctx context.Context, text *ads.Text) (ad *ads.Ad, err error) {
 	log.Println("AdDetail: gRPC connection for adDetail ID: ", text.Text)
 	adFromDB, err := store.GetAdPB(text.Text)
+	log.Println(adFromDB.GetTitle())
 	log.Println("AdDetail: Sending response")
 	return adFromDB, err
 

@@ -53,10 +53,13 @@ func InitializeDB() {
 	//connection string for the database
 	conf = loadConfig()
 	connInfo = "host=" + conf.Postgres.Host +
+		" port=" + conf.Postgres.Port +
 		" dbname=" + conf.Postgres.DBName +
 		" user=" + conf.Postgres.User +
 		" password=" + conf.Postgres.Password +
 		" sslmode=" + conf.Postgres.SSLMode
+
+	log.Println(connInfo)
 }
 
 //loadConfig loads the configuration from a yaml file
@@ -124,8 +127,7 @@ func GetAdListElastic(offset int, limit int) (*ads.AdList, error) {
 	log.Println("Reading response from Elastic...")
 
 	err = json.Unmarshal(body, &results)
-	// log.Println("printing from ad repository ads got from elastic")
-	// log.Println(string(body))
+	log.Println(string(body))
 	if err != nil {
 		panic(err)
 	}
@@ -259,6 +261,8 @@ func GetAdPB(id string) (*ads.Ad, error) {
 		log.Fatal(err)
 	}
 
+	log.Println("connected to database")
+
 	//modify the query depending on the number of ads to display
 	query := `SELECT public.***REMOVED***.id, 
 	public.***REMOVED***.title, 
@@ -294,9 +298,11 @@ func GetAdPB(id string) (*ads.Ad, error) {
 	ORDER BY ***REMOVED***.last_updated ASC`
 
 	row := db.QueryRow(query, id)
+	log.Println("Fetching ad", id, " from database")
+
 	var myTime time.Time
 	var ad ads.Ad
-	row.Scan(&ad.Id,
+	err = row.Scan(&ad.Id,
 		&ad.Title,
 		&ad.Description,
 		&ad.City,
@@ -327,7 +333,7 @@ func GetAdPB(id string) (*ads.Ad, error) {
 	checkErr(err, "panic")
 
 	ad.PublishedDate = parseDate(ad.PublishedDate, &myTime)
-
+	log.Println("returning ad ", id, " ", ad.Title, " ", ad.PublishedDate.String())
 	if ad.Id == 0 {
 
 		return &ad, errors.New("Ad not found")
