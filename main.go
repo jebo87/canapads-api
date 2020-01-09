@@ -57,13 +57,14 @@ func (adsServer) AdDetail(ctx context.Context, text *ads.Text) (ad *ads.Ad, err 
 
 }
 
-func (adsServer) List(ctx context.Context, void *ads.Void) (*ads.AdList, error) {
+func (adsServer) List(ctx context.Context, filter *ads.Filter) (*ads.AdList, error) {
 	log.Println("List: loading ads..")
+	
 	//from database:
 	// ads, err := store.GetAdListPB(0, 0)
 
 	//from elastic search
-	ads, err := store.GetAdListElastic(0, 0)
+	ads, err := store.GetAdListElastic(int(filter.From), int(filter.Size))
 	// log.Println("printing from List in main:")
 	// log.Println(ads.Ads)
 	log.Println("List: Ads loaded ")

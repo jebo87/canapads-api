@@ -10,7 +10,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 
 	//"bitbucket.org/jebo87/makako-grpc/ads"
 	//"bitbucket.org/jebo/go-postgres-monitor"
@@ -110,14 +109,22 @@ type elasticSearch struct {
 
 //GetAdListElastic this returns the ads.
 //Pagination can be done using offset and limit
-func GetAdListElastic(offset int, limit int) (*ads.AdList, error) {
+func GetAdListElastic(from int, size int) (*ads.AdList, error) {
 	adList := &ads.AdList{}
 	//get the results from elastic search
 	//this needs to be changed for POST using the query parameters.
-	resp, err := http.Get("http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_search?scroll=1m&size=100")
+	// var prueba = `-d {"sort": [{ "field1": { "order": "desc" }},{ "field2": { "order": "desc" }}],"size": 100}`
+
+	log.Println("http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_search?sort=from=" + strconv.Itoa(from) + "m&size=" + strconv.Itoa(size))
+	resp, err := http.Get("http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_search?from=" + strconv.Itoa(from) + "&size=" + strconv.Itoa(size))
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
+
+	// params := make(map[string]string)
+	// params["sort"]=[{''}]
+	// http.NewRequest("GET","http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_search",)
+
 	defer resp.Body.Close()
 	log.Println("Connected to Elastic...")
 	//create a struct to hold the values from the response
@@ -200,7 +207,7 @@ func GetAdListPB(offset int, limit int) (*ads.AdList, error) {
 
 	//define an ad to store the ad coming from the database
 
-	var myTime time.Time
+	//var myTime time.Time
 	adList.Ads = []*ads.Ad{}
 	//iterate over the results
 	for rows.Next() {
@@ -213,7 +220,7 @@ func GetAdListPB(offset int, limit int) (*ads.AdList, error) {
 			&ad.City,
 			&ad.Country,
 			&ad.Price,
-			&myTime,
+			&ad.PublishedDate,
 			&ad.Rooms,
 			&ad.PropertyType,
 			&ad.UserdadId,
@@ -239,7 +246,7 @@ func GetAdListPB(offset int, limit int) (*ads.AdList, error) {
 			return nil, err
 		}
 
-		ad.PublishedDate = parseDate(ad.PublishedDate, &myTime)
+		// ad.PublishedDate = parseDate(ad.PublishedDate, &myTime)
 
 		adList.Ads = append(adList.Ads, &ad)
 
@@ -300,7 +307,7 @@ func GetAdPB(id string) (*ads.Ad, error) {
 	row := db.QueryRow(query, id)
 	log.Println("Fetching ad", id, " from database")
 
-	var myTime time.Time
+	//var myTime time.Time
 	var ad ads.Ad
 	err = row.Scan(&ad.Id,
 		&ad.Title,
@@ -308,7 +315,7 @@ func GetAdPB(id string) (*ads.Ad, error) {
 		&ad.City,
 		&ad.Country,
 		&ad.Price,
-		&myTime,
+		&ad.PublishedDate,
 		&ad.Rooms,
 		&ad.PropertyType,
 		&ad.UserdadId,
@@ -332,8 +339,8 @@ func GetAdPB(id string) (*ads.Ad, error) {
 
 	checkErr(err, "panic")
 
-	ad.PublishedDate = parseDate(ad.PublishedDate, &myTime)
-	log.Println("returning ad ", id, " ", ad.Title, " ", ad.PublishedDate.String())
+	//ad.PublishedDate = parseDate(ad.PublishedDate, &myTime)
+	log.Println("returning ad ", id, " ", ad.Title, " ", ad.PublishedDate)
 	if ad.Id == 0 {
 
 		return &ad, errors.New("Ad not found")

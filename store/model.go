@@ -1,10 +1,7 @@
 package store
 
 import (
-	"log"
 	"strconv"
-	"strings"
-	"time"
 
 	"bitbucket.org/jebo87/makako-grpc/ads"
 )
@@ -28,8 +25,8 @@ type Ad struct {
 	Published     bool     `json:"published"`
 	LastUpdated   string   `json:"last_updated"`
 	Featured      int      `json:"featured"`
-	Lat           string   `json:"lat"`
-	Lon           string   `json:"lon"`
+	Lat           float64  `json:"lat"`
+	Lon           float64  `json:"lon"`
 	Bathrooms     int      `json:"bathrooms"`
 	ViewCount     int      `json:"view_count"`
 	Street        string   `json:"street"`
@@ -51,14 +48,14 @@ func AdToString(ad Ad) string {
 func ToProto(ad Ad, pb *ads.Ad) *ads.Ad {
 	//we need to parse the date to a format that
 	//protobuf will understand
-	myDate := &ads.Date{}
-	slices := strings.Split(ad.PublishedDate[0:10], "-")
-	year, _ := strconv.Atoi(slices[0])
-	month, _ := strconv.Atoi(slices[1])
-	day, _ := strconv.Atoi(slices[2])
-	myDate.Year = int32(year)
-	myDate.Month = int32(month)
-	myDate.Day = int32(day)
+	// myDate := &ads.Date{}
+	// slices := strings.Split(ad.PublishedDate[0:10], "-")
+	// year, _ := strconv.Atoi(slices[0])
+	// month, _ := strconv.Atoi(slices[1])
+	// day, _ := strconv.Atoi(slices[2])
+	// myDate.Year = int32(year)
+	// myDate.Month = int32(month)
+	// myDate.Day = int32(day)
 	//map every single attribute
 	pb.Id = int32(ad.ID)
 	pb.Title = ad.Title
@@ -67,7 +64,7 @@ func ToProto(ad Ad, pb *ads.Ad) *ads.Ad {
 	pb.Country = ad.Country
 	pb.Price = int32(ad.Price)
 	pb.PropertyType = ad.PropertyType
-	pb.PublishedDate = myDate
+	pb.PublishedDate = ad.PublishedDate
 	pb.Rooms = int32(ad.Rooms)
 	pb.UserdadId = int32(ad.UserAdID)
 	pb.Pets = int32(ad.Pets)
@@ -76,8 +73,8 @@ func ToProto(ad Ad, pb *ads.Ad) *ads.Ad {
 	pb.RentByOwner = ad.RentByOwner
 	pb.Published = ad.Published
 	pb.Featured = int32(ad.Featured)
-	pb.Lat = ad.Lat
-	pb.Lon = ad.Lon
+	pb.Lat = float64(ad.Lat)
+	pb.Lon = float64(ad.Lon)
 	pb.Bathrooms = int32(ad.Bathrooms)
 	pb.ViewCount = int32(ad.ViewCount)
 	pb.Street = ad.Street
@@ -87,23 +84,23 @@ func ToProto(ad Ad, pb *ads.Ad) *ads.Ad {
 	pb.Gym = ad.Gym
 	pb.Pool = ad.Pool
 	pb.Images = ad.Images
-	log.Println(pb)
-	log.Println("**************************************")
-	log.Println(ad)
+	//log.Println(pb)
+	//log.Println("**************************************")
+	//log.Println(ad)
 	return pb
 }
 
 //parseDate parses the date coming from the database to a format
 //compatible with protobuffers
-func parseDate(pdate *ads.Date, fecha *time.Time) *ads.Date {
-	pdate = &ads.Date{}
-	other := fecha.Year()
-	log.Println(fecha.String())
-	pdate.Year = int32(other)
+// func parseDate(pdate *ads.Date, fecha *time.Time) *ads.Date {
+// 	pdate = &ads.Date{}
+// 	other := fecha.Year()
+// 	log.Println(fecha.String())
+// 	pdate.Year = int32(other)
 
-	pdate.Month = int32(fecha.Month())
-	pdate.Day = int32(fecha.Day())
+// 	pdate.Month = int32(fecha.Month())
+// 	pdate.Day = int32(fecha.Day())
 
-	return pdate
+// 	return pdate
 
-}
+// }
