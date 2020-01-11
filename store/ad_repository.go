@@ -14,8 +14,8 @@ import (
 	//"bitbucket.org/jebo87/makako-grpc/ads"
 	//"bitbucket.org/jebo/go-postgres-monitor"
 
-	"bitbucket.org/jebo87/makako-grpc/ads"
 	"github.com/lib/pq"
+	"gitlab.com/jebo87/makako-grpc/ads"
 
 	//database
 	_ "github.com/lib/pq"

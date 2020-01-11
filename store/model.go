@@ -3,7 +3,7 @@ package store
 import (
 	"strconv"
 
-	"bitbucket.org/jebo87/makako-grpc/ads"
+	"gitlab.com/jebo87/makako-grpc/ads"
 )
 
 // Ad basic structure

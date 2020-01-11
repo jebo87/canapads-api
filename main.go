@@ -7,10 +7,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"golang.org/x/net/context"
+	"gitlab.com/jebo87/makako-api/store"
+	"gitlab.com/jebo87/makako-grpc/ads"
 
-	"bitbucket.org/jebo87/makako-api/store"
-	"bitbucket.org/jebo87/makako-grpc/ads"
+	"golang.org/x/net/context"
 
 	"google.golang.org/grpc"
 )
@@ -59,7 +59,7 @@ func (adsServer) AdDetail(ctx context.Context, text *ads.Text) (ad *ads.Ad, err 
 
 func (adsServer) List(ctx context.Context, filter *ads.Filter) (*ads.AdList, error) {
 	log.Println("List: loading ads..")
-	
+
 	//from database:
 	// ads, err := store.GetAdListPB(0, 0)
 
