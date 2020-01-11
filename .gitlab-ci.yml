@@ -1,0 +1,27 @@
+stages:
+  - test
+  - deploy
+
+step-develop:
+  stage: test
+  before_script:
+    - echo here we should have the before script
+  only:
+    - development
+  tags:
+    - development
+  script:
+    - echo here we should at least be running tests
+
+step-deploy-production:
+  stage: test
+  before_script:
+    - echo here we should have the before script for deployment
+  only:
+    - master
+  tags:
+    - master
+  script:
+    - export DOCKER_GIT_CREDENTIALS="$(cat ~/.git-credentials)"
+    - docker build --build-arg DOCKER_GIT_CREDENTIALS -t registry.gitlab.com/jebo87/makako-api:0.1 .
+    - docker push registry.gitlab.com/jebo87/makako-api:0.1
