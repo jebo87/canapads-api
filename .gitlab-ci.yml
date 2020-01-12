@@ -16,7 +16,7 @@ step-develop:
 step-deploy-production:
   stage: deploy
   before_script:
-    - echo here we should have the before script for deployment
+    - echo here we should have the before script for deployment $DOCKER_GIT_CREDENTIALS
   only:
     - master
   tags:
