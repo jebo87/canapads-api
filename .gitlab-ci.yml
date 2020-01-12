@@ -22,5 +22,5 @@ step-deploy-production:
   tags:
     - master
   script:
-    - docker build --build-arg $DOCKER_GIT_CREDENTIALS -t registry.gitlab.com/jebo87/makako-api:0.1 .
+    - docker build --build-arg DOCKER_GIT_CREDENTIALS=$DOCKER_GIT_CREDENTIALS -t registry.gitlab.com/jebo87/makako-api:0.1 .
     - docker push registry.gitlab.com/jebo87/makako-api:0.1
