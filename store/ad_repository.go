@@ -43,6 +43,11 @@ type Config struct {
 	}
 }
 
+type ErrorMessage struct {
+	Error  string `json:"error"`
+	Status string `json:"status"`
+}
+
 var deployedFlag *bool
 var conf Config
 var connInfo string
@@ -85,7 +90,7 @@ func loadConfig() (conf Config) {
 
 }
 
-type elasticSearch struct {
+type elasticSearchAd struct {
 	Took     int  `json:"took"`
 	TimedOut bool `json:"timed_out"`
 	Shards   struct {
@@ -106,6 +111,43 @@ type elasticSearch struct {
 		} `json:"hits"`
 	} `json:"hits"`
 }
+type elasticSearchAdCount struct {
+	Count  int `json:"count"`
+	Shards struct {
+		Total      int `json:"total"`
+		Successful int `json:"succesful"`
+		Skipped    int `json:"skipped"`
+		Failed     int `json:"failed"`
+	} `json:"_shards"`
+}
+
+//GetElasticCount returns the ad count
+func GetElasticCount() (*ads.AdCount, error) {
+	resp, err := http.Get("http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_count")
+	if err != nil {
+		log.Println(err)
+	}
+	defer resp.Body.Close()
+
+	results := &elasticSearchAdCount{}
+	log.Println("Reading response from Elastic...")
+	body, err := ioutil.ReadAll(resp.Body)
+	count := &ads.AdCount{}
+	if resp.StatusCode == 200 {
+
+		err = json.Unmarshal(body, &results)
+		log.Println(string(body))
+		if err != nil {
+			log.Println("ERROR", err)
+		}
+		count.Count = int32(results.Count)
+	} else {
+		err = errors.New(string(body))
+	}
+
+	return count, err
+
+}
 
 //GetAdListElastic this returns the ads.
 //Pagination can be done using offset and limit
@@ -116,40 +158,50 @@ func GetAdListElastic(from int, size int) (*ads.AdList, error) {
 	// var prueba = `-d {"sort": [{ "field1": { "order": "desc" }},{ "field2": { "order": "desc" }}],"size": 100}`
 
 	log.Println("http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_search?sort=from=" + strconv.Itoa(from) + "m&size=" + strconv.Itoa(size))
+
 	resp, err := http.Get("http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_search?from=" + strconv.Itoa(from) + "&size=" + strconv.Itoa(size))
 	if err != nil {
 		log.Println(err)
+		return adList, err
 	}
 
-	// params := make(map[string]string)
-	// params["sort"]=[{''}]
-	// http.NewRequest("GET","http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_search",)
+	if resp.StatusCode == 200 {
+		// params := make(map[string]string)
+		// params["sort"]=[{''}]
+		// http.NewRequest("GET","http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_search",)
 
-	defer resp.Body.Close()
-	log.Println("Connected to Elastic...")
-	//create a struct to hold the values from the response
-	results := &elasticSearch{}
+		defer resp.Body.Close()
+		log.Println("Connected to Elastic...")
+		//create a struct to hold the values from the response
+		results := &elasticSearchAd{}
 
-	body, err := ioutil.ReadAll(resp.Body)
-	log.Println("Reading response from Elastic...")
+		body, err := ioutil.ReadAll(resp.Body)
+		log.Println("Reading response from Elastic...")
 
-	err = json.Unmarshal(body, &results)
-	log.Println(string(body))
-	if err != nil {
-		panic(err)
+		err = json.Unmarshal(body, &results)
+		log.Println(string(body))
+		if err != nil {
+			panic(err)
+		}
+
+		adList.Ads = []*ads.Ad{}
+		log.Println("Translating ads to protobuf...")
+		//convert the ads to protobuf and add them to the adList that will be returned
+		for _, ad := range results.Hits.Hits {
+			adPB := &ads.Ad{}
+			adPB = ToProto(ad.Source, adPB)
+			adList.Ads = append(adList.Ads, adPB)
+
+		}
+		log.Println("done!")
+		return adList, nil
 	}
-
-	adList.Ads = []*ads.Ad{}
-	log.Println("Translating ads to protobuf...")
-	//convert the ads to protobuf and add them to the adList that will be returned
-	for _, ad := range results.Hits.Hits {
-		adPB := &ads.Ad{}
-		adPB = ToProto(ad.Source, adPB)
-		adList.Ads = append(adList.Ads, adPB)
-
-	}
-	log.Println("done!")
-	return adList, nil
+	//TODO: return custom errors like the ones coming from elastic, this will help troubleshoot in case of problems
+	// {
+	// 	"error": "Incorrect HTTP method for uri [/ads/ad/?sort] and method [GET], allowed: [POST]",
+	// 	"status": 405
+	// 	}
+	return adList, errors.New("status" + strconv.Itoa(resp.StatusCode) + " MakakoLabs: There was a problem while procesing your request")
 
 }
 
@@ -337,7 +389,9 @@ func GetAdPB(id string) (*ads.Ad, error) {
 		&ad.HouseNumber,
 		(*pq.StringArray)(&ad.Images))
 
-	checkErr(err, "panic")
+	if err != nil {
+		return &ad, errors.New("Ad not found")
+	}
 
 	//ad.PublishedDate = parseDate(ad.PublishedDate, &myTime)
 	log.Println("returning ad ", id, " ", ad.Title, " ", ad.PublishedDate)
