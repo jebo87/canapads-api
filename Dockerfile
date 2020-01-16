@@ -36,5 +36,5 @@ ENTRYPOINT ["/makako-api/bin/makako-api", "-deployed=true"]
 EXPOSE 7777
 #export DOCKER_GIT_CREDENTIALS="$(cat ~/.git-credentials)"
 #docker build --build-arg DOCKER_GIT_CREDENTIALS -t makako-api:0.1 .
-#docker run --rm --name makako-api --network makako_network -v $(pwd)/config:/makako-api/bin/config -p 7777:7777/tcp registry.gitlab.com/jebo87/makako-api:0.1
-#docker run -d --name makako-api --network makako_network -v $(pwd)/config:/makako-api/bin/config -p 7777:7777/tcp registry.gitlab.com/jebo87/makako-api:0.1
+#docker run --rm --name makako-api --network makako_network -v $(pwd)/config/makako-api/config:/makako-api/bin/config -p 7777:7777/tcp registry.gitlab.com/jebo87/makako-api:0.1
+#docker run -d --name makako-api --network makako_network -v $(pwd)/config/makako-api/config:/makako-api/bin/config -p 7777:7777/tcp registry.gitlab.com/jebo87/makako-api:0.1
