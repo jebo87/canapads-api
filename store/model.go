@@ -46,17 +46,6 @@ func AdToString(ad Ad) string {
 
 //ToProto maps an ad to a protobuf ad
 func ToProto(ad Ad, pb *ads.Ad) *ads.Ad {
-	//we need to parse the date to a format that
-	//protobuf will understand
-	// myDate := &ads.Date{}
-	// slices := strings.Split(ad.PublishedDate[0:10], "-")
-	// year, _ := strconv.Atoi(slices[0])
-	// month, _ := strconv.Atoi(slices[1])
-	// day, _ := strconv.Atoi(slices[2])
-	// myDate.Year = int32(year)
-	// myDate.Month = int32(month)
-	// myDate.Day = int32(day)
-	//map every single attribute
 	pb.Id = int32(ad.ID)
 	pb.Title = ad.Title
 	pb.Description = ad.Description
@@ -89,18 +78,3 @@ func ToProto(ad Ad, pb *ads.Ad) *ads.Ad {
 	//log.Println(ad)
 	return pb
 }
-
-//parseDate parses the date coming from the database to a format
-//compatible with protobuffers
-// func parseDate(pdate *ads.Date, fecha *time.Time) *ads.Date {
-// 	pdate = &ads.Date{}
-// 	other := fecha.Year()
-// 	log.Println(fecha.String())
-// 	pdate.Year = int32(other)
-
-// 	pdate.Month = int32(fecha.Month())
-// 	pdate.Day = int32(fecha.Day())
-
-// 	return pdate
-
-// }
