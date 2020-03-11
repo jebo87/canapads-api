@@ -78,3 +78,34 @@ func ToProto(ad Ad, pb *ads.Ad) *ads.Ad {
 	//log.Println(ad)
 	return pb
 }
+
+type elasticSearchAd struct {
+	Took     int  `json:"took"`
+	TimedOut bool `json:"timed_out"`
+	Shards   struct {
+		Total      int `json:"total"`
+		Successful int `json:"succesful"`
+		Skipped    int `json:"skipped"`
+		Failed     int `json:"failed"`
+	} `json:"_shards"`
+	Hits struct {
+		Total    int     `json:"total"`
+		MaxScore float32 `json:"max_score"`
+		Hits     []struct {
+			Index  string  `json:"_index"`
+			Type   string  `json:"_type"`
+			ID     string  `json:"_id"`
+			Score  float32 `json:"_score"`
+			Source Ad      `json:"_source"`
+		} `json:"hits"`
+	} `json:"hits"`
+}
+type elasticSearchAdCount struct {
+	Count  int `json:"count"`
+	Shards struct {
+		Total      int `json:"total"`
+		Successful int `json:"succesful"`
+		Skipped    int `json:"skipped"`
+		Failed     int `json:"failed"`
+	} `json:"_shards"`
+}

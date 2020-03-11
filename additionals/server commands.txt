@@ -1,0 +1,75 @@
+//create the volume container for persistence
+docker create -v /var/lib/postgresql/data --name postgres-data busybox
+
+
+
+//run the container
+docker run --name postgres_makako -p 5432:5432 -e "POSTGRES_USER=***REMOVED*** POSTGRES_PASSWORD=***REMOVED*** POSTGRES_DB:'***REMOVED***'" -d --volumes-from postgres-data postgres
+
+
+//connect to database and see tables
+docker run -it --link postgres_makako:postgres --rm postgres sh -c 'exec psql -h "$POSTGRES_PORT_5432_TCP_ADDR" -p "$POSTGRES_PORT_5432_TCP_PORT" -U postgres -l'
+
+
+//SQL
+CREATE TABLE ***REMOVED*** (
+	id        SERIAL PRIMARY KEY,
+ 
+ 	title       varchar(255) NOT NULL,
+    description        text NOT NULL,
+    city    varchar(255) NOT NULL,
+    country        varchar(10) NOT NULL,
+    price         integer NOT NULL,
+    published_date date NOT NULL,
+    rooms int,
+    property_type varchar(255),
+    userad_id integer,
+	pets integer,
+	furnished boolean,
+	garages integer,
+	rent_by_owner boolean,
+	published boolean ,
+	featured integer,
+	lat float,
+	lon float,
+	bathrooms integer,
+	view_count integer,
+	house_number varchar(20),
+	street varchar(250),
+	postal_code varchar(250),
+	state_province varchar(250) ,
+	neighborhood varchar (250),
+	pool boolean,
+	gym boolean
+	
+	
+);
+
+CREATE TABLE ad_images(
+	id        SERIAL PRIMARY KEY,
+	ad_id	integer references ***REMOVED***(id),
+	path varchar(500)
+
+)
+
+
+//tutorials
+docker create -v /var/lib/postgresql/data --name postgres-data busybox
+docker run --name postgres -p 5432:5432 -e "POSTGRES_PASSWORD=test123" -d --volumes-from postgres-data postgres
+get IP from docker container $(docker inspect --format '{{ .NetworkSettings.IPAddress }}' container_name);
+
+//consul
+
+curl -X PUT --data-binary @web.json http://localhost:8500/v1/agent/service/register
+{
+  "ID": "makako-gateway",
+  "Name": "makako-gateway",
+  "Address": "192.168.99.1",
+  "Port": 80,
+  "check": {
+    "http": "192.168.99.1",
+    "interval": "10s",
+    "timeout": "1s"
+   }
+}
+

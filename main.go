@@ -7,10 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"golang.org/x/net/context"
-
 	"gitlab.com/jebo87/makako-api/store"
 	"gitlab.com/jebo87/makako-grpc/ads"
+	"golang.org/x/net/context"
 
 	"google.golang.org/grpc"
 )
@@ -23,7 +22,7 @@ func main() {
 	store.InitializeDB()
 
 	// create a listener on TCP port 7777
-	listener, err := net.Listen("tcp", ":7777")
+	listener, err := net.Listen("tcp", "0.0.0.0:7777")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -71,7 +70,13 @@ func (adsServer) List(ctx context.Context, filter *ads.Filter) (*ads.AdList, err
 	// ads, err := store.GetAdListPB(0, 0)
 
 	//from elastic search
-	ads, err := store.GetAdListElastic(int(filter.From), int(filter.Size))
+	ads, err := store.SearchElastic(filter)
+
+	if err == nil {
+		log.Println(err)
+	}
+
+	// ads, err := store.GetAdListElastic(filter)
 	// log.Println("printing from List in main:")
 	// log.Println(ads.Ads)
 	log.Println("List: Ads loaded ")
