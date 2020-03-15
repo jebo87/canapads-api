@@ -70,11 +70,8 @@ func prepareQueryParam(searchTerm string) string {
 	}
 	return queryParam
 }
-func prepareBody(searchTerm string, filters map[string]string) string {
+func prepareBody(searchTerm string, filters map[string]string, fromSize map[string]string, priceRange string) string {
 	//adList := &ads.AdList{}
-	price := make(map[string]int)
-	price["gte"] = 1
-	price["lte"] = 10000
 
 	queryParam := prepareQueryParam(searchTerm)
 
@@ -87,9 +84,12 @@ func prepareBody(searchTerm string, filters map[string]string) string {
 			"published_date",
 			"price",
 			"last_updated",
-			"images"
+			"images",
+			"lat",
+			"lon"
 		],
-		"size": 100,
+		"from": %v,
+		"size": %v,
 		"query": {
 			"bool": {
 				%v
@@ -107,15 +107,48 @@ func prepareBody(searchTerm string, filters map[string]string) string {
 		terms = append(terms, fmt.Sprintf(`{"term": {"%v": %v}}`, k, v))
 	}
 
-	priceRange := `{"range": { "price": { "gte": %v, "lte": %v } } }`
+	terms = append(terms, priceRange)
 
-	terms = append(terms, fmt.Sprintf(priceRange, price["gte"], price["lte"]))
-
-	body := fmt.Sprintf(search, queryParam, strings.Join(terms, ","))
+	body := fmt.Sprintf(search, fromSize["from"], fromSize["size"], queryParam, strings.Join(terms, ","))
+	log.Println("Query object sent to elastic:")
+	log.Println(body)
 	return body
 }
 
-func prepareFilters(filter *ads.Filter) map[string]string {
+func preparePriceRangeFilter(filter *ads.Filter) string {
+	price := make(map[string]int)
+	//default values for price search
+	//TODO: this needs to be revised if we ever decide to list houses for sale
+	price["gte"] = 0
+	price["lte"] = 1000000
+	if filter.GetPriceLow() != nil {
+		price["gte"] = int(filter.GetPriceLow().GetValue())
+	}
+	if filter.GetPriceHigh() != nil {
+		price["lte"] = int(filter.GetPriceHigh().GetValue())
+	}
+
+	priceRange := `{"range": { "price": { "gte": %v, "lte": %v } } }`
+	priceRange = fmt.Sprintf(priceRange, price["gte"], price["lte"])
+
+	return priceRange
+
+}
+
+func prepareFromSizeFilter(filter *ads.Filter) map[string]string {
+	myFromSizeMap := make(map[string]string)
+	if filter.GetSize() != nil {
+		myFromSizeMap["size"] = strconv.Itoa(int(filter.GetSize().GetValue()))
+	}
+	if filter.GetFrom() != nil {
+		myFromSizeMap["from"] = strconv.Itoa(int(filter.GetFrom().GetValue()))
+	}
+
+	return myFromSizeMap
+}
+
+func prepareSingleValueFilters(filter *ads.Filter) map[string]string {
+
 	myFilterMap := make(map[string]string)
 	if filter.GetGym() != nil {
 		myFilterMap["gym"] = fmt.Sprintf("%v", filter.GetGym().GetValue())
@@ -154,14 +187,11 @@ func prepareFilters(filter *ads.Filter) map[string]string {
 	// google.protobuf.Int32Value bathrooms = 18;
 
 	// google.protobuf.BoolValue hasImages = 24;
-	// google.protobuf.Int32Value from = 25;
-	// google.protobuf.Int32Value size = 26;
-	// google.protobuf.StringValue searchParam =27;
 	// google.protobuf.StringValue published_date_low = 7;
 	// google.protobuf.StringValue published_date_high = 8;
 	// google.protobuf.Int32Value rooms_low = 9;
 	// google.protobuf.Int32Value rooms_high= 10;
-
+	log.Println(fmt.Printf("filter %v", filter))
 	return myFilterMap
 }
 
@@ -171,8 +201,11 @@ func GetAdListElastic(filter *ads.Filter) (*ads.AdList, error) {
 
 	//this map will contain all the applicable filters received in the request
 	//we must validate each type of filter to be able to set them properly for elasticSearch
-	myFilterMap := prepareFilters(filter)
-	prepareBody(filter.GetSearchParam().GetValue(), myFilterMap)
+	singleValueFilters := prepareSingleValueFilters(filter)
+	fromSizeFilter := prepareFromSizeFilter(filter)
+	priceRange := preparePriceRangeFilter(filter)
+
+	prepareBody(filter.GetSearchParam().GetValue(), singleValueFilters, fromSizeFilter, priceRange)
 	adList := &ads.AdList{}
 	//get the results from elastic search
 	//this needs to be changed for POST using the query parameters.
@@ -230,11 +263,13 @@ func SearchElastic(filter *ads.Filter) (*ads.AdList, error) {
 
 	//this map will contain all the applicable filters received in the request
 	//we must validate each type of filter to be able to set them properly for elasticSearch
-	myFilterMap := prepareFilters(filter)
-	requestBody := []byte(prepareBody(filter.GetSearchParam().GetValue(), myFilterMap))
+	myFilterMap := prepareSingleValueFilters(filter)
+	fromSize := prepareFromSizeFilter(filter)
+	priceRange := preparePriceRangeFilter(filter)
+
+	requestBody := []byte(prepareBody(filter.GetSearchParam().GetValue(), myFilterMap, fromSize, priceRange))
 	adList := &ads.AdList{}
 
-	log.Println(prepareBody(filter.GetSearchParam().GetValue(), myFilterMap))
 	req, err := http.NewRequest("POST", "http://"+conf.Elastic.Host+":"+conf.Elastic.Port+"/_search", bytes.NewBuffer(requestBody))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -257,11 +292,12 @@ func SearchElastic(filter *ads.Filter) (*ads.AdList, error) {
 
 		err = json.Unmarshal(body, &results)
 		log.Println(fmt.Sprintf("took :%v, timed_out:%v ,hits: %v", results.Took, results.TimedOut, results.Hits.Total))
+		adList.Ads = []*ads.Ad{}
 		if err != nil {
-			panic(err)
+			log.Println(err)
+			return nil, err
 		}
 
-		adList.Ads = []*ads.Ad{}
 		log.Println("Translating ads to protobuf...")
 		//convert the ads to protobuf and add them to the adList that will be returned
 		for _, ad := range results.Hits.Hits {
@@ -279,6 +315,7 @@ func SearchElastic(filter *ads.Filter) (*ads.AdList, error) {
 	// 	"error": "Incorrect HTTP method for uri [/ads/ad/?sort] and method [GET], allowed: [POST]",
 	// 	"status": 405
 	// 	}
+	log.Println(resp)
 	return adList, errors.New("status" + strconv.Itoa(resp.StatusCode) + " MakakoLabs: There was a problem while procesing your request")
 
 }
