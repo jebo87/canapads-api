@@ -43,7 +43,7 @@ func GetElasticCount() (*ads.AdCount, error) {
 }
 func prepareQueryParam(searchTerm string) string {
 	queryParam := ""
-
+	log.Println(fmt.Sprintf("search_param is %v", searchTerm))
 	if searchTerm != "" {
 		queryParam = `"should": [
 			{
@@ -148,7 +148,8 @@ func prepareFromSizeFilter(filter *ads.Filter) map[string]string {
 }
 
 func prepareSingleValueFilters(filter *ads.Filter) map[string]string {
-
+	log.Println("preparing single value filters")
+	log.Println(filter)
 	myFilterMap := make(map[string]string)
 	if filter.GetGym() != nil {
 		myFilterMap["gym"] = fmt.Sprintf("%v", filter.GetGym().GetValue())
@@ -259,7 +260,7 @@ func GetAdListElastic(filter *ads.Filter) (*ads.AdList, error) {
 
 }
 
-func SearchElastic(filter *ads.Filter) (*ads.AdList, error) {
+func SearchElastic(filter *ads.Filter) (*ads.SearchResponse, error) {
 
 	//this map will contain all the applicable filters received in the request
 	//we must validate each type of filter to be able to set them properly for elasticSearch
@@ -269,7 +270,7 @@ func SearchElastic(filter *ads.Filter) (*ads.AdList, error) {
 
 	requestBody := []byte(prepareBody(filter.GetSearchParam().GetValue(), myFilterMap, fromSize, priceRange))
 	adList := &ads.AdList{}
-
+	searchResponse := &ads.SearchResponse{}
 	req, err := http.NewRequest("POST", "http://"+conf.Elastic.Host+":"+conf.Elastic.Port+"/_search", bytes.NewBuffer(requestBody))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -307,7 +308,10 @@ func SearchElastic(filter *ads.Filter) (*ads.AdList, error) {
 
 		}
 		log.Println("done!")
-		return adList, nil
+		searchResponse.List = adList
+		searchResponse.Count = int32(results.Hits.Total)
+
+		return searchResponse, nil
 	}
 
 	//TODO: return custom errors like the ones coming from elastic, this will help troubleshoot in case of problems
@@ -316,6 +320,6 @@ func SearchElastic(filter *ads.Filter) (*ads.AdList, error) {
 	// 	"status": 405
 	// 	}
 	log.Println(resp)
-	return adList, errors.New("status" + strconv.Itoa(resp.StatusCode) + " MakakoLabs: There was a problem while procesing your request")
+	return searchResponse, errors.New("status" + strconv.Itoa(resp.StatusCode) + " MakakoLabs: There was a problem while procesing your request")
 
 }

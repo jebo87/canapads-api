@@ -63,7 +63,7 @@ func (adsServer) Count(ctx context.Context, void *ads.Void) (count *ads.AdCount,
 	return count, err
 
 }
-func (adsServer) List(ctx context.Context, filter *ads.Filter) (*ads.AdList, error) {
+func (adsServer) List(ctx context.Context, filter *ads.Filter) (*ads.SearchResponse, error) {
 	log.Println("List: loading ads..")
 
 	//from database:
