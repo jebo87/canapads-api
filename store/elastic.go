@@ -167,7 +167,7 @@ func prepareSingleValueFilters(filter *ads.Filter) map[string]string {
 		myFilterMap["country"] = fmt.Sprintf("%v", filter.GetCountry().GetValue())
 	}
 	if filter.GetPropertyType() != nil {
-		myFilterMap["property_type"] = fmt.Sprintf("%v", filter.GetPropertyType().GetValue())
+		myFilterMap["property_type"] = fmt.Sprintf("%q", filter.GetPropertyType().GetValue())
 	}
 	if filter.GetFurnished() != nil {
 		myFilterMap["furnished"] = fmt.Sprintf("%v", filter.GetFurnished().GetValue())
@@ -181,8 +181,10 @@ func prepareSingleValueFilters(filter *ads.Filter) map[string]string {
 	if filter.GetNeighborhood() != nil {
 		myFilterMap["neighborhood"] = fmt.Sprintf("%v", filter.GetNeighborhood().GetValue())
 	}
+	if filter.GetGarages() != nil {
+		myFilterMap["garages"] = fmt.Sprintf("%v", filter.GetGarages().GetValue())
+	}
 
-	// google.protobuf.Int32Value garages = 14 ;
 	// google.protobuf.StringValue lat = 16;
 	// google.protobuf.StringValue lon = 17;
 	// google.protobuf.Int32Value bathrooms = 18;
