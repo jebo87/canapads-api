@@ -3,7 +3,6 @@ package store
 import (
 	"database/sql"
 	"errors"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -42,16 +41,13 @@ type ErrorMessage struct {
 	Status string `json:"status"`
 }
 
-var deployedFlag *bool
 var conf Config
 
 var connInfo string
 
 //InitializeDBConfig used to initialize the configuration for the database
 func InitializeDBConfig() {
-	deployedFlag = flag.Bool("deployed", false, "Defines if absolute paths need to be used for the config files")
 
-	flag.Parse()
 	//connection string for the database
 	conf = loadConfig()
 	if *deployedFlag {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net"
 	"os"
@@ -16,9 +17,14 @@ import (
 
 type adsServer struct{}
 
+var deployedFlag *bool
+
 func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	deployedFlag = flag.Bool("deployed", false, "Defines if absolute paths need to be used for the config files")
+
+	flag.Parse()
 	store.InitializeDBConfig()
 
 	// create a listener on TCP port 7777
