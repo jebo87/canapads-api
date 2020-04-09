@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"strconv"
 
 	//"bitbucket.org/jebo87/makako-grpc/ads"
@@ -34,11 +35,6 @@ type Config struct {
 		Host string `yaml:"host"`
 		Port string `yaml:"port"`
 	}
-	DBInfo struct {
-		TargetTable  string `yaml:"table"`
-		Schema       string `yaml:"schema"`
-		MonitorTable string `yaml:"monitor"`
-	}
 }
 
 type ErrorMessage struct {
@@ -48,32 +44,37 @@ type ErrorMessage struct {
 
 var deployedFlag *bool
 var conf Config
+
 var connInfo string
 
-//InitializeDB used to initialize the configuration for the database
-func InitializeDB() {
+//InitializeDBConfig used to initialize the configuration for the database
+func InitializeDBConfig() {
+	deployedFlag = flag.Bool("deployed", false, "Defines if absolute paths need to be used for the config files")
+
+	flag.Parse()
 	//connection string for the database
 	conf = loadConfig()
-	connInfo = "host=" + conf.Postgres.Host +
-		" port=" + conf.Postgres.Port +
-		" dbname=" + conf.Postgres.DBName +
-		" user=" + conf.Postgres.User +
-		" password=" + conf.Postgres.Password +
-		" sslmode=" + conf.Postgres.SSLMode
+	if *deployedFlag {
+		connInfo = fmt.Sprintf("host=%v port=%v dbname=%v user=%v password=%v sslmode=%v", os.Getenv("postgres.host"), os.Getenv("postgres.port"), os.Getenv("postgres.dbname"), os.Getenv("postgres.user"), os.Getenv("postgres.password"), os.Getenv("postgres.sslmode"))
 
+	} else {
+		connInfo = "host=" + conf.Postgres.Host +
+			" port=" + conf.Postgres.Port +
+			" dbname=" + conf.Postgres.DBName +
+			" user=" + conf.Postgres.User +
+			" password=" + conf.Postgres.Password +
+			" sslmode=" + conf.Postgres.SSLMode
+	}
 	log.Println(connInfo)
 }
 
 //loadConfig loads the configuration from a yaml file
 func loadConfig() (conf Config) {
-	deployedFlag = flag.Bool("deployed", false, "Defines if absolute paths need to be used for the config files")
 	var configFile []byte
 	var err error
-	flag.Parse()
 
-	if *deployedFlag {
-		configFile, err = ioutil.ReadFile("/makako-api/bin/config/conf.yaml")
-	} else {
+	if *deployedFlag == false {
+
 		configFile, err = ioutil.ReadFile("config/conf.yaml")
 	}
 	if err != nil {

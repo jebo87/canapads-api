@@ -22,5 +22,13 @@ step-deploy-production:
   tags:
     - master
   script:
-    - docker build --build-arg DOCKER_GIT_CREDENTIALS=$DOCKER_GIT_CREDENTIALS -t registry.gitlab.com/jebo87/makako-api:0.1 .
-    - docker push registry.gitlab.com/jebo87/makako-api:0.1
+    - 'VERSION=$(curl -Ss --request GET --header "PRIVATE-TOKEN: DJxgGGJxoE94ZWqYDL4w" "https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/repository/tags" | jq -r ".[0] | .name")'
+    - test -z "$VERSION" && echo "no version tag found" && exit 1
+    - echo 'Version '$VERSION ' was found'
+    - export DOCKER_GIT_CREDENTIALS="$(cat ~/.git-credentials)"
+    - docker build --build-arg DOCKER_GIT_CREDENTIALS=$DOCKER_GIT_CREDENTIALS -t registry.gitlab.com/jebo87/makako-api:$VERSION .
+    - docker push registry.gitlab.com/jebo87/makako-api:$VERSION
+    - docker tag registry.gitlab.com/jebo87/makako-api:$VERSION registry.gitlab.com/jebo87/makako-gateway:latest
+    - docker push registry.gitlab.com/jebo87/makako-api:latest
+    - docker image prune -f
+    - kubectl apply -f /mnt/linux/k8s/MakakoLabs/api-workloads.yaml

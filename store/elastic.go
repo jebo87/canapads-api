@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -16,7 +17,16 @@ import (
 
 //GetElasticCount returns the total quantity of ads
 func GetElasticCount() (*ads.AdCount, error) {
-	resp, err := http.Get("http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_count")
+	var resp *http.Response
+	var err error
+	if *deployedFlag {
+		resp, err = http.Get("http://" + os.Getenv("elastic.host") + ":" + os.Getenv("elastic.port") + "/ads/ad/_count")
+
+	} else {
+		resp, err = http.Get("http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_count")
+
+	}
+
 	if err != nil {
 		log.Println(err)
 	}
@@ -213,10 +223,19 @@ func GetAdListElastic(filter *ads.Filter) (*ads.AdList, error) {
 	//get the results from elastic search
 	//this needs to be changed for POST using the query parameters.
 	// var prueba = `-d {"sort": [{ "field1": { "order": "desc" }},{ "field2": { "order": "desc" }}],"size": 100}`
+	var err error
+	var resp *http.Response
+	if *deployedFlag {
+		resp, err = http.Get("http://" + os.Getenv("elastic.host") + ":" + os.Getenv("elastic.port") + "/ads/ad/_search?from=" + strconv.Itoa(int(filter.From.GetValue())) + "&size=" + strconv.Itoa(int(filter.Size.GetValue())))
+		log.Println("http://" + os.Getenv("elastic.host") + ":" + os.Getenv("elastic.port") + "/ads/ad/_search?from=" + strconv.Itoa(int(filter.From.GetValue())) + "m&size=" + strconv.Itoa(int(filter.Size.GetValue())))
 
-	log.Println("http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_search?from=" + strconv.Itoa(int(filter.From.GetValue())) + "m&size=" + strconv.Itoa(int(filter.Size.GetValue())))
+	} else {
 
-	resp, err := http.Get("http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_search?from=" + strconv.Itoa(int(filter.From.GetValue())) + "&size=" + strconv.Itoa(int(filter.Size.GetValue())))
+		resp, err = http.Get("http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_search?from=" + strconv.Itoa(int(filter.From.GetValue())) + "&size=" + strconv.Itoa(int(filter.Size.GetValue())))
+		log.Println("http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_search?from=" + strconv.Itoa(int(filter.From.GetValue())) + "m&size=" + strconv.Itoa(int(filter.Size.GetValue())))
+
+	}
+
 	if err != nil {
 		log.Println(err)
 		return adList, err
@@ -273,7 +292,17 @@ func SearchElastic(filter *ads.Filter) (*ads.SearchResponse, error) {
 	requestBody := []byte(prepareBody(filter.GetSearchParam().GetValue(), myFilterMap, fromSize, priceRange))
 	adList := &ads.AdList{}
 	searchResponse := &ads.SearchResponse{}
-	req, err := http.NewRequest("POST", "http://"+conf.Elastic.Host+":"+conf.Elastic.Port+"/_search", bytes.NewBuffer(requestBody))
+	var err error
+	var req *http.Request
+
+	if *deployedFlag {
+
+		req, err = http.NewRequest("POST", "http://"+os.Getenv("elastic.host")+":"+os.Getenv("elastic.port")+"/_search", bytes.NewBuffer(requestBody))
+	} else {
+
+		req, err = http.NewRequest("POST", "http://"+conf.Elastic.Host+":"+conf.Elastic.Port+"/_search", bytes.NewBuffer(requestBody))
+	}
+
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
