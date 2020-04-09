@@ -16,7 +16,7 @@ import (
 )
 
 //GetElasticCount returns the total quantity of ads
-func GetElasticCount() (*ads.AdCount, error) {
+func GetElasticCount(deployedFlag *bool) (*ads.AdCount, error) {
 	var resp *http.Response
 	var err error
 	if *deployedFlag {
@@ -210,7 +210,7 @@ func prepareSingleValueFilters(filter *ads.Filter) map[string]string {
 
 //GetAdListElastic this returns the ads.
 //Pagination can be done using offset and limit
-func GetAdListElastic(filter *ads.Filter) (*ads.AdList, error) {
+func GetAdListElastic(deployedFlag *bool, filter *ads.Filter) (*ads.AdList, error) {
 
 	//this map will contain all the applicable filters received in the request
 	//we must validate each type of filter to be able to set them properly for elasticSearch
@@ -281,7 +281,7 @@ func GetAdListElastic(filter *ads.Filter) (*ads.AdList, error) {
 
 }
 
-func SearchElastic(filter *ads.Filter) (*ads.SearchResponse, error) {
+func SearchElastic(deployedFlag *bool, filter *ads.Filter) (*ads.SearchResponse, error) {
 
 	//this map will contain all the applicable filters received in the request
 	//we must validate each type of filter to be able to set them properly for elasticSearch

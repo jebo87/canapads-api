@@ -46,10 +46,10 @@ var conf Config
 var connInfo string
 
 //InitializeDBConfig used to initialize the configuration for the database
-func InitializeDBConfig() {
+func InitializeDBConfig(deployedFlag *bool) {
 
 	//connection string for the database
-	conf = loadConfig()
+	conf = loadConfig(deployedFlag)
 	if *deployedFlag {
 		connInfo = fmt.Sprintf("host=%v port=%v dbname=%v user=%v password=%v sslmode=%v", os.Getenv("postgres.host"), os.Getenv("postgres.port"), os.Getenv("postgres.dbname"), os.Getenv("postgres.user"), os.Getenv("postgres.password"), os.Getenv("postgres.sslmode"))
 
@@ -65,7 +65,7 @@ func InitializeDBConfig() {
 }
 
 //loadConfig loads the configuration from a yaml file
-func loadConfig() (conf Config) {
+func loadConfig(deployedFlag *bool) (conf Config) {
 	var configFile []byte
 	var err error
 

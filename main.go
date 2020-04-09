@@ -25,7 +25,7 @@ func main() {
 	deployedFlag = flag.Bool("deployed", false, "Defines if absolute paths need to be used for the config files")
 
 	flag.Parse()
-	store.InitializeDBConfig()
+	store.InitializeDBConfig(deployedFlag)
 
 	// create a listener on TCP port 7777
 	listener, err := net.Listen("tcp", "0.0.0.0:7777")
@@ -64,7 +64,7 @@ func (adsServer) AdDetail(ctx context.Context, text *ads.Text) (ad *ads.Ad, err 
 
 func (adsServer) Count(ctx context.Context, void *ads.Void) (count *ads.AdCount, err error) {
 	log.Println("AdDetail: gRPC connection for ad count")
-	count, err = store.GetElasticCount()
+	count, err = store.GetElasticCount(deployedFlag)
 	log.Println("AdDetail: Sending response")
 	return count, err
 
@@ -76,7 +76,7 @@ func (adsServer) List(ctx context.Context, filter *ads.Filter) (*ads.SearchRespo
 	// ads, err := store.GetAdListPB(0, 0)
 
 	//from elastic search
-	ads, err := store.SearchElastic(filter)
+	ads, err := store.SearchElastic(deployedFlag, filter)
 
 	if err == nil {
 		log.Println(err)
