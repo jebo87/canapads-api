@@ -27,7 +27,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /makako-a
 ############################
 # STEP 2 build a small image
 ############################
-FROM scratch
+FROM alpine:3.7
 # Copy our static executable.
 COPY --from=builder /makako-api/bin/makako-api /makako-api/bin/makako-api
 
