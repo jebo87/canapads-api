@@ -297,7 +297,7 @@ func SearchElastic(deployedFlag *bool, filter *ads.Filter) (*ads.SearchResponse,
 
 	if *deployedFlag {
 
-		req, err = http.NewRequest("POST", "http://"+os.Getenv("elastic.host")+":"+os.Getenv("elastic.port")+"/_search", bytes.NewBuffer(requestBody))
+		req, err = http.NewRequest("POST", "http://"+os.Getenv("elastic_host")+":"+os.Getenv("elastic_port")+"/_search", bytes.NewBuffer(requestBody))
 	} else {
 
 		req, err = http.NewRequest("POST", "http://"+conf.Elastic.Host+":"+conf.Elastic.Port+"/_search", bytes.NewBuffer(requestBody))

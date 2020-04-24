@@ -51,7 +51,7 @@ func InitializeDBConfig(deployedFlag *bool) {
 	//connection string for the database
 	conf = loadConfig(deployedFlag)
 	if *deployedFlag {
-		connInfo = fmt.Sprintf("host=%v port=%v dbname=%v user=%v password=%v sslmode=%v", os.Getenv("postgres.host"), os.Getenv("postgres.port"), os.Getenv("postgres.dbname"), os.Getenv("postgres.user"), os.Getenv("postgres.password"), os.Getenv("postgres.sslmode"))
+		connInfo = fmt.Sprintf("host=%v port=%v dbname=%v user=%v password=%v sslmode=%v", os.Getenv("postgres_host"), os.Getenv("postgres_port"), os.Getenv("postgres_dbname"), os.Getenv("postgres_user"), os.Getenv("postgres_password"), os.Getenv("postgres_sslmode"))
 
 	} else {
 		connInfo = "host=" + conf.Postgres.Host +
@@ -61,7 +61,7 @@ func InitializeDBConfig(deployedFlag *bool) {
 			" password=" + conf.Postgres.Password +
 			" sslmode=" + conf.Postgres.SSLMode
 	}
-	log.Println(connInfo)
+	//log.Println(connInfo)
 }
 
 //loadConfig loads the configuration from a yaml file
@@ -121,7 +121,7 @@ func GetAdListPB(offset int, limit int) (*ads.AdList, error) {
 	public.***REMOVED***.rent_by_owner, 
 	public.***REMOVED***.published,
 	public.***REMOVED***.last_updated,
-	array_agg(public.ad_images.path) as images 
+	array_remove(array_agg(public.ad_images.path),NULL) as images 
 	FROM public.***REMOVED*** 
 	LEFT OUTER JOIN public.ad_images ON (public.***REMOVED***.id = public.ad_images.ad_id) 
 	GROUP BY public.***REMOVED***.id
@@ -231,7 +231,7 @@ func GetAdPB(id string) (*ads.Ad, error) {
 	public.***REMOVED***.state_province,
 	public.***REMOVED***.neighborhood,
 	public.***REMOVED***.house_number,
-	array_agg(public.ad_images.path) as images 
+	array_remove(array_agg(public.ad_images.path),NULL) as images 
 	FROM public.***REMOVED*** 
 	LEFT OUTER JOIN public.ad_images ON (public.***REMOVED***.id = public.ad_images.ad_id) 
 	WHERE  public.***REMOVED***.id = $1
@@ -272,6 +272,7 @@ func GetAdPB(id string) (*ads.Ad, error) {
 		(*pq.StringArray)(&ad.Images))
 
 	if err != nil {
+		log.Println(err)
 		return &ad, errors.New("Ad not found")
 	}
 

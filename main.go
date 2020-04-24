@@ -28,7 +28,7 @@ func main() {
 	store.InitializeDBConfig(deployedFlag)
 
 	// create a listener on TCP port 7777
-	listener, err := net.Listen("tcp", "0.0.0.0:7777")
+	listener, err := net.Listen("tcp", ":7777")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
