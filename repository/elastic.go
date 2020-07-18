@@ -19,16 +19,11 @@ import (
 var remoteAddres string
 
 //GetElasticCount returns the total quantity of ads
-func GetElasticCount(deployedFlag *bool) (*ads.AdCount, error) {
+func GetElasticCount() (*ads.AdCount, error) {
 	var resp *http.Response
 	var err error
-	if *deployedFlag {
-		resp, err = http.Get("http://" + os.Getenv("elastic.host") + ":" + os.Getenv("elastic.port") + "/ads/ad/_count")
 
-	} else {
-		resp, err = http.Get("http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_count")
-
-	}
+	resp, err = http.Get("http://" + os.Getenv("elastic.host") + ":" + os.Getenv("elastic.port") + "/ads/ad/_count")
 
 	if err != nil {
 		log.Println(err)
@@ -221,7 +216,7 @@ func prepareSingleValueFilters(filter *ads.Filter) map[string]string {
 
 //GetAdListElastic this returns the ads.
 //Pagination can be done using offset and limit
-func GetAdListElastic(deployedFlag *bool, filter *ads.Filter) (*ads.AdList, error) {
+func GetAdListElastic(filter *ads.Filter) (*ads.AdList, error) {
 
 	//this map will contain all the applicable filters received in the request
 	//we must validate each type of filter to be able to set them properly for elasticSearch
@@ -236,16 +231,9 @@ func GetAdListElastic(deployedFlag *bool, filter *ads.Filter) (*ads.AdList, erro
 	// var prueba = `-d {"sort": [{ "field1": { "order": "desc" }},{ "field2": { "order": "desc" }}],"size": 100}`
 	var err error
 	var resp *http.Response
-	if *deployedFlag {
-		resp, err = http.Get("http://" + os.Getenv("elastic.host") + ":" + os.Getenv("elastic.port") + "/ads/ad/_search?from=" + strconv.Itoa(int(filter.From.GetValue())) + "&size=" + strconv.Itoa(int(filter.Size.GetValue())))
-		log.Println("http://" + os.Getenv("elastic.host") + ":" + os.Getenv("elastic.port") + "/ads/ad/_search?from=" + strconv.Itoa(int(filter.From.GetValue())) + "m&size=" + strconv.Itoa(int(filter.Size.GetValue())))
 
-	} else {
-
-		resp, err = http.Get("http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_search?from=" + strconv.Itoa(int(filter.From.GetValue())) + "&size=" + strconv.Itoa(int(filter.Size.GetValue())))
-		log.Println("http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_search?from=" + strconv.Itoa(int(filter.From.GetValue())) + "m&size=" + strconv.Itoa(int(filter.Size.GetValue())))
-
-	}
+	resp, err = http.Get("http://" + os.Getenv("elastic.host") + ":" + os.Getenv("elastic.port") + "/ads/ad/_search?from=" + strconv.Itoa(int(filter.From.GetValue())) + "&size=" + strconv.Itoa(int(filter.Size.GetValue())))
+	log.Println("http://" + os.Getenv("elastic.host") + ":" + os.Getenv("elastic.port") + "/ads/ad/_search?from=" + strconv.Itoa(int(filter.From.GetValue())) + "m&size=" + strconv.Itoa(int(filter.Size.GetValue())))
 
 	if err != nil {
 		log.Println(err)
@@ -293,7 +281,7 @@ func GetAdListElastic(deployedFlag *bool, filter *ads.Filter) (*ads.AdList, erro
 }
 
 //SearchElastic serach in elastic search
-func SearchElastic(deployedFlag *bool, filter *ads.Filter, remoteAddr string) (*ads.SearchResponse, error) {
+func SearchElastic(filter *ads.Filter, remoteAddr string) (*ads.SearchResponse, error) {
 	remoteAddres = remoteAddr
 	//this map will contain all the applicable filters received in the request
 	//we must validate each type of filter to be able to set them properly for elasticSearch
@@ -307,13 +295,7 @@ func SearchElastic(deployedFlag *bool, filter *ads.Filter, remoteAddr string) (*
 	var err error
 	var req *http.Request
 
-	if *deployedFlag {
-
-		req, err = http.NewRequest("POST", "http://"+os.Getenv("elastic_host")+":"+os.Getenv("elastic_port")+"/_search", bytes.NewBuffer(requestBody))
-	} else {
-
-		req, err = http.NewRequest("POST", "http://"+conf.Elastic.Host+":"+conf.Elastic.Port+"/_search", bytes.NewBuffer(requestBody))
-	}
+	req, err = http.NewRequest("POST", "http://"+os.Getenv("elastic_host")+":"+os.Getenv("elastic_port")+"/_search", bytes.NewBuffer(requestBody))
 
 	req.Header.Set("Content-Type", "application/json")
 

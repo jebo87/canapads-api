@@ -17,7 +17,7 @@ type Ad struct {
 	PublishedDate string   `json:"published_date"`
 	Rooms         int      `json:"rooms"`
 	PropertyType  string   `json:"property_type"`
-	UserAdID      int      `json:"userad_id"`
+	UserAdID      string   `json:"userad_id"`
 	Pets          int      `json:"pets"`
 	Furnished     bool     `json:"furnished"`
 	Garages       int      `json:"garages"`
@@ -55,7 +55,7 @@ func ToProto(ad Ad, pb *ads.Ad) *ads.Ad {
 	pb.PropertyType = ad.PropertyType
 	pb.PublishedDate = ad.PublishedDate
 	pb.Rooms = int32(ad.Rooms)
-	pb.UserdadId = int32(ad.UserAdID)
+	pb.UserdadId = ad.UserAdID
 	pb.Pets = int32(ad.Pets)
 	pb.Furnished = ad.Furnished
 	pb.Garages = int32(ad.Garages)

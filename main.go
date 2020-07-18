@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"log"
 	"net"
@@ -16,11 +17,16 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
+
+	//database
+	_ "github.com/lib/pq"
 )
 
 type adsServer struct{}
 
 var deployedFlag *bool
+var db *sql.DB
+var err error
 
 func main() {
 	c := make(chan os.Signal, 1)
@@ -28,7 +34,12 @@ func main() {
 	deployedFlag = flag.Bool("deployed", false, "Defines if absolute paths need to be used for the config files")
 
 	flag.Parse()
-	repository.InitializeDBConfig(deployedFlag)
+	connInfo := repository.InitializeDBConfig()
+	db, err = sql.Open("postgres", connInfo)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer db.Close()
 
 	// create a listener on TCP port 7777
 	var listener net.Listener
@@ -51,7 +62,7 @@ func main() {
 	// create a gRPC server object
 	grpcServer := grpc.NewServer()
 	log.Println("Creating gRPC server...")
-	// attach the ads service to the server
+	// attach the adsServer to the server
 	ads.RegisterAdsServer(grpcServer, &adsSer)
 	log.Println("Attaching ads service..")
 
@@ -68,7 +79,7 @@ func main() {
 
 func (adsServer) AdDetail(ctx context.Context, text *ads.Text) (ad *ads.Ad, err error) {
 	log.Println("AdDetail: gRPC connection for adDetail ID: ", text.Text)
-	adFromDB, err := repository.GetAdPB(text.Text)
+	adFromDB, err := repository.GetAdPB(db, text.Text)
 	log.Println(adFromDB.GetTitle())
 	log.Println("AdDetail: Sending response")
 	return adFromDB, err
@@ -77,7 +88,7 @@ func (adsServer) AdDetail(ctx context.Context, text *ads.Text) (ad *ads.Ad, err 
 
 func (adsServer) Count(ctx context.Context, void *ads.Void) (count *ads.AdCount, err error) {
 	log.Println("AdDetail: gRPC connection for ad count")
-	count, err = repository.GetElasticCount(deployedFlag)
+	count, err = repository.GetElasticCount()
 	log.Println("AdDetail: Sending response")
 	return count, err
 
@@ -99,7 +110,7 @@ func (adsServer) List(ctx context.Context, filter *ads.Filter) (*ads.SearchRespo
 	// ads, err := repository.GetAdListPB(0, 0)
 
 	//from elastic search
-	ads, err := repository.SearchElastic(deployedFlag, filter, md["remote-addr"][0])
+	ads, err := repository.SearchElastic(filter, md["remote-addr"][0])
 
 	if err != nil {
 		log.Printf("%v Error %v", md["remote-addr"], err)
@@ -113,4 +124,8 @@ func (adsServer) List(ctx context.Context, filter *ads.Filter) (*ads.SearchRespo
 
 	return ads, err
 
+}
+
+func (adsServer) UserListings(ctx context.Context, userID *ads.UserID) (adList *ads.AdList, err error) {
+	return repository.GetUserListings(db, userID.UserID)
 }
