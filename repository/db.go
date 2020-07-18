@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
@@ -17,77 +16,27 @@ import (
 
 	//database
 	_ "github.com/lib/pq"
-	yaml "gopkg.in/yaml.v2"
 )
-
-//Config struct to handle the YAML configuration
-type Config struct {
-	Postgres struct {
-		Host     string `yaml:"host"`
-		Port     string `yaml:"port"`
-		DBName   string `yaml:"dbname"`
-		User     string `yaml:"user"`
-		Password string `yaml:"password"`
-		SSLMode  string `yaml:"sslmode"`
-	}
-	Elastic struct {
-		Host string `yaml:"host"`
-		Port string `yaml:"port"`
-	}
-}
 
 type ErrorMessage struct {
 	Error  string `json:"error"`
 	Status string `json:"status"`
 }
 
-var conf Config
-
 var connInfo string
 
 //InitializeDBConfig used to initialize the configuration for the database
-func InitializeDBConfig(deployedFlag *bool) {
+func InitializeDBConfig() string {
 
-	//connection string for the database
-	conf = loadConfig(deployedFlag)
-	if *deployedFlag {
-		connInfo = fmt.Sprintf("host=%v port=%v dbname=%v user=%v password=%v sslmode=%v",
-			os.Getenv("postgres_host"),
-			os.Getenv("postgres_port"),
-			os.Getenv("postgres_dbname"),
-			os.Getenv("postgres_user"),
-			os.Getenv("postgres_password"),
-			os.Getenv("postgres_sslmode"))
+	connInfo := fmt.Sprintf("host=%v port=%v dbname=%v user=%v password=%v sslmode=%v",
+		os.Getenv("postgres_host"),
+		os.Getenv("postgres_port"),
+		os.Getenv("postgres_dbname"),
+		os.Getenv("postgres_user"),
+		os.Getenv("postgres_password"),
+		os.Getenv("postgres_sslmode"))
 
-	} else {
-		connInfo = "host=" + conf.Postgres.Host +
-			" port=" + conf.Postgres.Port +
-			" dbname=" + conf.Postgres.DBName +
-			" user=" + conf.Postgres.User +
-			" password=" + conf.Postgres.Password +
-			" sslmode=" + conf.Postgres.SSLMode
-	}
-	//log.Println(connInfo)
-}
-
-//loadConfig loads the configuration from a yaml file
-func loadConfig(deployedFlag *bool) (conf Config) {
-	var configFile []byte
-	var err error
-
-	if *deployedFlag == false {
-
-		configFile, err = ioutil.ReadFile("config/conf.yaml")
-	}
-	if err != nil {
-		panic(err)
-	}
-
-	err = yaml.Unmarshal(configFile, &conf)
-	if err != nil {
-		panic(err)
-	}
-	return
+	return connInfo
 
 }
 
@@ -95,18 +44,12 @@ func loadConfig(deployedFlag *bool) (conf Config) {
 
 //GetAdListPB this returns the ads.
 //Pagination can be done using offset and limit
-func GetAdListPB(offset int, limit int) (*ads.AdList, error) {
+func GetAdListPB(db *sql.DB, offset int, limit int) (*ads.AdList, error) {
 
 	adList := &ads.AdList{}
 
-	//open the connection and store errors in err
-	db, err := sql.Open("postgres", connInfo)
-
-	//defer the database close
-	defer db.Close()
-
 	//if there were errors during database opening we log them here.
-	if err != nil {
+	if err := db.Ping(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -197,19 +140,10 @@ func GetAdListPB(offset int, limit int) (*ads.AdList, error) {
 }
 
 //GetAdPB returns the ad matching given ID
-func GetAdPB(id string) (*ads.Ad, error) {
-	//open the connection and store errors in err
-	db, err := sql.Open("postgres", connInfo)
-	//defer the database close
-	defer db.Close()
-
-	//if there were errors during database opening we log them here.
-	if err != nil {
-		log.Fatal(err)
+func GetAdPB(db *sql.DB, id string) (*ads.Ad, error) {
+	if err := db.Ping(); err != nil {
+		log.Panic(err)
 	}
-
-	log.Println("connected to database")
-
 	//modify the query depending on the number of ads to display
 	query := `SELECT public.***REMOVED***.id, 
 	public.***REMOVED***.title, 
@@ -249,7 +183,7 @@ func GetAdPB(id string) (*ads.Ad, error) {
 
 	//var myTime time.Time
 	var ad ads.Ad
-	err = row.Scan(&ad.Id,
+	err := row.Scan(&ad.Id,
 		&ad.Title,
 		&ad.Description,
 		&ad.City,
