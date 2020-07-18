@@ -8,11 +8,14 @@ import (
 	"os/signal"
 	"syscall"
 
-	"gitlab.com/jebo87/makako-api/store"
+	"gitlab.com/jebo87/makako-api/repository"
+	"gitlab.com/jebo87/makako-gateway/httputils"
 	"gitlab.com/jebo87/makako-grpc/ads"
 	"golang.org/x/net/context"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
 )
 
 type adsServer struct{}
@@ -25,10 +28,20 @@ func main() {
 	deployedFlag = flag.Bool("deployed", false, "Defines if absolute paths need to be used for the config files")
 
 	flag.Parse()
-	store.InitializeDBConfig(deployedFlag)
+	repository.InitializeDBConfig(deployedFlag)
 
 	// create a listener on TCP port 7777
-	listener, err := net.Listen("tcp", ":7777")
+	var listener net.Listener
+	var err error
+	if *deployedFlag {
+		listener, err = net.Listen("tcp", os.Getenv("PROD_ADDRESS")+":7777")
+
+	} else {
+		listener, err = net.Listen("tcp", os.Getenv("DEV_ADDRESS")+":7777")
+		log.Println(os.Getenv("DEV_ADDRESS") + ":7777")
+
+	}
+
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -55,7 +68,7 @@ func main() {
 
 func (adsServer) AdDetail(ctx context.Context, text *ads.Text) (ad *ads.Ad, err error) {
 	log.Println("AdDetail: gRPC connection for adDetail ID: ", text.Text)
-	adFromDB, err := store.GetAdPB(text.Text)
+	adFromDB, err := repository.GetAdPB(text.Text)
 	log.Println(adFromDB.GetTitle())
 	log.Println("AdDetail: Sending response")
 	return adFromDB, err
@@ -64,28 +77,40 @@ func (adsServer) AdDetail(ctx context.Context, text *ads.Text) (ad *ads.Ad, err 
 
 func (adsServer) Count(ctx context.Context, void *ads.Void) (count *ads.AdCount, err error) {
 	log.Println("AdDetail: gRPC connection for ad count")
-	count, err = store.GetElasticCount(deployedFlag)
+	count, err = repository.GetElasticCount(deployedFlag)
 	log.Println("AdDetail: Sending response")
 	return count, err
 
 }
-func (adsServer) List(ctx context.Context, filter *ads.Filter) (*ads.SearchResponse, error) {
-	log.Println("List: loading ads..")
+func (adsServer) AddListing(ctx context.Context, listing *ads.Ad) (count *ads.ListingID, err error) {
+	log.Println("AddListing: gRPC call started")
+	log.Println("AdDetail: Sending response")
+	return &ads.ListingID{ListingID: 182919}, nil
 
+}
+func (adsServer) List(ctx context.Context, filter *ads.Filter) (*ads.SearchResponse, error) {
+
+	httputils.LogDivider()
+	peerInfo, _ := peer.FromContext(ctx)
+	log.Printf("[%v] Remote gRPC Client", peerInfo.Addr)
+	md, _ := metadata.FromIncomingContext(ctx)
+	log.Printf("%v Procesing request from remote address", md["remote-addr"])
 	//from database:
-	// ads, err := store.GetAdListPB(0, 0)
+	// ads, err := repository.GetAdListPB(0, 0)
 
 	//from elastic search
-	ads, err := store.SearchElastic(deployedFlag, filter)
+	ads, err := repository.SearchElastic(deployedFlag, filter, md["remote-addr"][0])
 
-	if err == nil {
-		log.Println(err)
+	if err != nil {
+		log.Printf("%v Error %v", md["remote-addr"], err)
+
 	}
 
-	// ads, err := store.GetAdListElastic(filter)
+	// ads, err := repository.GetAdListElastic(filter)
 	// log.Println("printing from List in main:")
 	// log.Println(ads.Ads)
-	log.Println("List: Ads loaded ")
+	log.Printf("%v Finished processing request ", md["remote-addr"])
+
 	return ads, err
 
 }

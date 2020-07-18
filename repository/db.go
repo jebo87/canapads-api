@@ -1,4 +1,4 @@
-package store
+package repository
 
 import (
 	"database/sql"
@@ -51,7 +51,13 @@ func InitializeDBConfig(deployedFlag *bool) {
 	//connection string for the database
 	conf = loadConfig(deployedFlag)
 	if *deployedFlag {
-		connInfo = fmt.Sprintf("host=%v port=%v dbname=%v user=%v password=%v sslmode=%v", os.Getenv("postgres_host"), os.Getenv("postgres_port"), os.Getenv("postgres_dbname"), os.Getenv("postgres_user"), os.Getenv("postgres_password"), os.Getenv("postgres_sslmode"))
+		connInfo = fmt.Sprintf("host=%v port=%v dbname=%v user=%v password=%v sslmode=%v",
+			os.Getenv("postgres_host"),
+			os.Getenv("postgres_port"),
+			os.Getenv("postgres_dbname"),
+			os.Getenv("postgres_user"),
+			os.Getenv("postgres_password"),
+			os.Getenv("postgres_sslmode"))
 
 	} else {
 		connInfo = "host=" + conf.Postgres.Host +

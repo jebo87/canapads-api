@@ -1,4 +1,4 @@
-package store
+package repository
 
 import (
 	"bytes"
@@ -12,8 +12,11 @@ import (
 	"strconv"
 	"strings"
 
+	"gitlab.com/jebo87/makako-gateway/httputils"
 	"gitlab.com/jebo87/makako-grpc/ads"
 )
+
+var remoteAddres string
 
 //GetElasticCount returns the total quantity of ads
 func GetElasticCount(deployedFlag *bool) (*ads.AdCount, error) {
@@ -33,7 +36,7 @@ func GetElasticCount(deployedFlag *bool) (*ads.AdCount, error) {
 	defer resp.Body.Close()
 
 	results := &elasticSearchAdCount{}
-	log.Println("Reading response from Elastic...")
+	log.Printf("[%v] Reading response from Elastic", remoteAddres)
 	body, err := ioutil.ReadAll(resp.Body)
 	count := &ads.AdCount{}
 	if resp.StatusCode == 200 {
@@ -53,26 +56,27 @@ func GetElasticCount(deployedFlag *bool) (*ads.AdCount, error) {
 }
 func prepareQueryParam(searchTerm string) string {
 	queryParam := ""
-	log.Println(fmt.Sprintf("search_param is %v", searchTerm))
 	if searchTerm != "" {
-		queryParam = `"should": [
-			{
-				"match": {
-					"description": {
-						"query": %q
-					
-					}
-				}
-			},{
-				"match": {
-					"title": {
-						"query": %q,
-						"boost":2
-					
-					}
-				}
+		queryParam = `
+"should": [
+	{
+		"match": {
+			"description": {
+				"query": %q
+			
 			}
-		],"minimum_should_match" : 1,`
+		}
+	},{
+		"match": {
+			"title": {
+				"query": %q,
+				"boost":2
+			
+			}
+		}
+	}
+],"minimum_should_match" : 1,
+`
 
 		queryParam = fmt.Sprintf(queryParam, searchTerm, searchTerm)
 	} else {
@@ -86,30 +90,30 @@ func prepareBody(searchTerm string, filters map[string]string, fromSize map[stri
 	queryParam := prepareQueryParam(searchTerm)
 
 	search := `
-	{
-		"_source": [
-			"id",
-			"title",
-			"description",
-			"published_date",
-			"price",
-			"last_updated",
-			"images",
-			"lat",
-			"lon"
-		],
-		"from": %v,
-		"size": %v,
-		"query": {
-			"bool": {
+{
+"_source": [
+		"id",
+		"title",
+		"description",
+		"published_date",
+		"price",
+		"last_updated",
+		"images",
+		"lat",
+		"lon"
+	],
+	"from": %v,
+	"size": %v,
+	"query": {
+		"bool": {
+			%v
+			"filter": [
 				%v
-				"filter": [
-					%v
-				]
-			}
+			]
 		}
 	}
-	`
+}
+`
 
 	var terms []string
 
@@ -120,8 +124,9 @@ func prepareBody(searchTerm string, filters map[string]string, fromSize map[stri
 	terms = append(terms, priceRange)
 
 	body := fmt.Sprintf(search, fromSize["from"], fromSize["size"], queryParam, strings.Join(terms, ","))
-	log.Println("Query object sent to elastic:")
-	log.Println(body)
+	log.Printf("[%v] Query object sent to elastic:", remoteAddres)
+
+	log.Println("\n", httputils.JSONPrettyPrint(body))
 	return body
 }
 
@@ -138,7 +143,12 @@ func preparePriceRangeFilter(filter *ads.Filter) string {
 		price["lte"] = int(filter.GetPriceHigh().GetValue())
 	}
 
-	priceRange := `{"range": { "price": { "gte": %v, "lte": %v } } }`
+	priceRange := `{
+					"range": 
+						{"price": 
+							{"gte": %v, "lte": %v} 
+						} 
+					}`
 	priceRange = fmt.Sprintf(priceRange, price["gte"], price["lte"])
 
 	return priceRange
@@ -158,8 +168,8 @@ func prepareFromSizeFilter(filter *ads.Filter) map[string]string {
 }
 
 func prepareSingleValueFilters(filter *ads.Filter) map[string]string {
-	log.Println("preparing single value filters")
-	log.Println(filter)
+	log.Printf("[%v] preparing single value filters", remoteAddres)
+
 	myFilterMap := make(map[string]string)
 	if filter.GetGym() != nil {
 		myFilterMap["gym"] = fmt.Sprintf("%v", filter.GetGym().GetValue())
@@ -204,7 +214,8 @@ func prepareSingleValueFilters(filter *ads.Filter) map[string]string {
 	// google.protobuf.StringValue published_date_high = 8;
 	// google.protobuf.Int32Value rooms_low = 9;
 	// google.protobuf.Int32Value rooms_high= 10;
-	log.Println(fmt.Printf("filter %v", filter))
+	//log.Printf("filter %v", filter)
+
 	return myFilterMap
 }
 
@@ -281,8 +292,9 @@ func GetAdListElastic(deployedFlag *bool, filter *ads.Filter) (*ads.AdList, erro
 
 }
 
-func SearchElastic(deployedFlag *bool, filter *ads.Filter) (*ads.SearchResponse, error) {
-
+//SearchElastic serach in elastic search
+func SearchElastic(deployedFlag *bool, filter *ads.Filter, remoteAddr string) (*ads.SearchResponse, error) {
+	remoteAddres = remoteAddr
 	//this map will contain all the applicable filters received in the request
 	//we must validate each type of filter to be able to set them properly for elasticSearch
 	myFilterMap := prepareSingleValueFilters(filter)
@@ -308,29 +320,30 @@ func SearchElastic(deployedFlag *bool, filter *ads.Filter) (*ads.SearchResponse,
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Println("error posting request", err)
+		log.Printf("[%v] Error posting request %v", remoteAddres, err)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == 200 {
 
-		log.Println("Connected to Elastic...")
+		log.Printf("[%v] Connected to Elastic...", remoteAddres)
 		//create a struct to hold the values from the response
 		results := &elasticSearchAd{}
 
 		body, err := ioutil.ReadAll(resp.Body)
-		log.Println("Reading response from Elastic...")
+		log.Printf("[%v] Reading response from Elastic...", remoteAddres)
 
 		err = json.Unmarshal(body, &results)
-		log.Println(fmt.Sprintf("took :%v, timed_out:%v ,hits: %v", results.Took, results.TimedOut, results.Hits.Total))
+		log.Printf("[%v] took :%v, timed_out:%v ,hits: %v", remoteAddres, results.Took, results.TimedOut, results.Hits.Total)
 		adList.Ads = []*ads.Ad{}
 		if err != nil {
 			log.Println(err)
 			return nil, err
 		}
 
-		log.Println("Translating ads to protobuf...")
+		log.Printf("[%v] Translating ads to protobuf...", remoteAddres)
+
 		//convert the ads to protobuf and add them to the adList that will be returned
 		for _, ad := range results.Hits.Hits {
 			adPB := &ads.Ad{}
@@ -338,7 +351,8 @@ func SearchElastic(deployedFlag *bool, filter *ads.Filter) (*ads.SearchResponse,
 			adList.Ads = append(adList.Ads, adPB)
 
 		}
-		log.Println("done!")
+		log.Printf("[%v] Listings loaded", remoteAddres)
+
 		searchResponse.List = adList
 		searchResponse.Count = int32(results.Hits.Total)
 
@@ -350,7 +364,7 @@ func SearchElastic(deployedFlag *bool, filter *ads.Filter) (*ads.SearchResponse,
 	// 	"error": "Incorrect HTTP method for uri [/ads/ad/?sort] and method [GET], allowed: [POST]",
 	// 	"status": 405
 	// 	}
-	log.Println(resp)
+	//log.Println(resp)
 	return searchResponse, errors.New("status" + strconv.Itoa(resp.StatusCode) + " MakakoLabs: There was a problem while procesing your request")
 
 }
