@@ -9,3 +9,5 @@ Frontend is being built using ReactJS and the backend is composed of microservic
 We also use ElasticSearch for searching, Postgres as a Database, Mongo DB for user storage, ORY Hydra as authorization server 
 
 This is a work in progress in early stages and I am currently working in what you see in the diagram below, however more micro services will be added in the future.
+
+![network](/uploads/6f6abd016e87fba283bc32402e202bd7/network.png)
