@@ -1,0 +1,16 @@
+apiVersion: skaffold/v2beta5
+kind: Config
+metadata:
+  name: makako-api
+build:
+  tagPolicy:
+    envTemplate:
+      template: "registry.gitlab.com/jebo87/makako-api:test"
+  artifacts:
+    - image: registry.gitlab.com/jebo87/makako-api
+      custom:
+        buildCommand: ./k8s/build-skaffold.sh
+deploy:
+  kubectl:
+    manifests:
+      - k8s/api-workloads.yaml

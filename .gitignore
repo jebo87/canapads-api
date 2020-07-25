@@ -7,6 +7,10 @@ set_env.sh
 _obj
 _test
 tmp/
+additionals
+.vscode/
+config
+
 
 # Architecture specific extensions/prefixes
 *.[568vq]

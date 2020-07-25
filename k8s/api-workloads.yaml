@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: makako-api
+spec:
+  #minReadySeconds: 30
+  selector:
+    matchLabels:
+      app: makako-api
+  replicas: 1
+  template: #template for the pods
+    metadata:
+      labels:
+        app: makako-api
+    spec:
+      containers:
+        - name: makako-api
+          image: registry.gitlab.com/jebo87/makako-api:latest
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: api-config
+      imagePullSecrets:
+        - name: regcred #this uses docker config login information to be able to pull the image
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: canapads-makako-api
+
+spec:
+  # This defines which pods are going to be represented by this Service
+  # The service becomes a network endpoint for either other services
+  # or maybe external users to connect to (eg browser)
+  selector:
+    app: makako-api
+
+  ports:
+    - name: grpc
+      port: 7777
+  type: ClusterIP
