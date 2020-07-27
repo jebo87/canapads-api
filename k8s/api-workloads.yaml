@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: makako-api
-          image: registry.gitlab.com/jebo87/makako-api:latest
+          image: registry.gitlab.com/jebo87/makako-api:test
           imagePullPolicy: Always
           envFrom:
             - configMapRef:
