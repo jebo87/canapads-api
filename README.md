@@ -10,4 +10,4 @@ We also use ElasticSearch for searching, Postgres as a Database, Mongo DB for us
 
 This is a work in progress in early stages and I am currently working in what you see in the diagram below, however more micro services will be added in the future.
 
-![network](/uploads/6f6abd016e87fba283bc32402e202bd7/network.png)
+![network](https://jorgebautista.dev/images/canapads/canapads.png)
