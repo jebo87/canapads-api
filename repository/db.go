@@ -54,28 +54,29 @@ func GetAdListPB(db *sql.DB, offset int, limit int) (*ads.AdList, error) {
 	}
 
 	//modify the query depending on the number of ads to display
-	query := `SELECT public.***REMOVED***.id, 
-	public.***REMOVED***.title, 
-	public.***REMOVED***.description, 
-	public.***REMOVED***.city, 
-	public.***REMOVED***.country, 
-	public.***REMOVED***.price, 
-	public.***REMOVED***.last_updated, 
-	public.***REMOVED***.rooms, 
-	public.***REMOVED***.property_type, 
-	public.***REMOVED***.userad_id, 
-	public.***REMOVED***.pets, 
-	public.***REMOVED***.furnished, 
-	public.***REMOVED***.garages, 
-	public.***REMOVED***.rent_by_owner, 
-	public.***REMOVED***.published,
-	public.***REMOVED***.last_updated,
+	query := `SELECT public.%[1]v.id, 
+	public.%[1]v.title, 
+	public.%[1]v.description, 
+	public.%[1]v.city, 
+	public.%[1]v.country, 
+	public.%[1]v.price, 
+	public.%[1]v.last_updated, 
+	public.%[1]v.rooms, 
+	public.%[1]v.property_type, 
+	public.%[1]v.userad_id, 
+	public.%[1]v.pets, 
+	public.%[1]v.furnished, 
+	public.%[1]v.garages, 
+	public.%[1]v.rent_by_owner, 
+	public.%[1]v.published,
+	public.%[1]v.last_updated,
 	array_remove(array_agg(public.ad_images.path),NULL) as images 
-	FROM public.***REMOVED*** 
-	LEFT OUTER JOIN public.ad_images ON (public.***REMOVED***.id = public.ad_images.ad_id) 
-	GROUP BY public.***REMOVED***.id
-	ORDER BY ***REMOVED***.last_updated ASC`
+	FROM public.%[1]v 
+	LEFT OUTER JOIN public.ad_images ON (public.%[1]v.id = public.ad_images.ad_id) 
+	GROUP BY public.%[1]v.id
+	ORDER BY %[1]v.last_updated ASC`
 
+	query = fmt.Sprintf(query, os.Getenv("postgres_dbname"))
 	if limit == 0 {
 		query += " offset " + strconv.Itoa(offset)
 	} else if limit != 0 {
@@ -87,7 +88,7 @@ func GetAdListPB(db *sql.DB, offset int, limit int) (*ads.AdList, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	defer rows.Close()
 	//define an ad to store the ad coming from the database
 
 	//var myTime time.Time
@@ -145,38 +146,39 @@ func GetAdPB(db *sql.DB, id string) (*ads.Ad, error) {
 		log.Panic(err)
 	}
 	//modify the query depending on the number of ads to display
-	query := `SELECT public.***REMOVED***.id, 
-	public.***REMOVED***.title, 
-	public.***REMOVED***.description, 
-	public.***REMOVED***.city, 
-	public.***REMOVED***.country, 
-	public.***REMOVED***.price, 
-	public.***REMOVED***.last_updated, 
-	public.***REMOVED***.rooms, 
-	public.***REMOVED***.property_type, 
-	public.***REMOVED***.userad_id, 
-	public.***REMOVED***.pets, 
-	public.***REMOVED***.furnished, 
-	public.***REMOVED***.garages, 
-	public.***REMOVED***.rent_by_owner, 
-	public.***REMOVED***.published,
-	public.***REMOVED***.last_updated,
-	public.***REMOVED***.featured,
-	public.***REMOVED***.lat,
-	public.***REMOVED***.lon,
-	public.***REMOVED***.bathrooms,
-	public.***REMOVED***.view_count,
-	public.***REMOVED***.street,
-	public.***REMOVED***.postal_code,
-	public.***REMOVED***.state_province,
-	public.***REMOVED***.neighborhood,
-	public.***REMOVED***.house_number,
+	query := `SELECT public.%[1]v.id, 
+	public.%[1]v.title, 
+	public.%[1]v.description, 
+	public.%[1]v.city, 
+	public.%[1]v.country, 
+	public.%[1]v.price, 
+	public.%[1]v.last_updated, 
+	public.%[1]v.rooms, 
+	public.%[1]v.property_type, 
+	public.%[1]v.userad_id, 
+	public.%[1]v.pets, 
+	public.%[1]v.furnished, 
+	public.%[1]v.garages, 
+	public.%[1]v.rent_by_owner, 
+	public.%[1]v.published,
+	public.%[1]v.last_updated,
+	public.%[1]v.featured,
+	public.%[1]v.lat,
+	public.%[1]v.lon,
+	public.%[1]v.bathrooms,
+	public.%[1]v.view_count,
+	public.%[1]v.street,
+	public.%[1]v.postal_code,
+	public.%[1]v.state_province,
+	public.%[1]v.neighborhood,
+	public.%[1]v.house_number,
 	array_remove(array_agg(public.ad_images.path),NULL) as images 
-	FROM public.***REMOVED*** 
-	LEFT OUTER JOIN public.ad_images ON (public.***REMOVED***.id = public.ad_images.ad_id) 
-	WHERE  public.***REMOVED***.id = $1
-	GROUP BY public.***REMOVED***.id
-	ORDER BY ***REMOVED***.last_updated ASC`
+	FROM public.%[1]v 
+	LEFT OUTER JOIN public.ad_images ON (public.%[1]v.id = public.ad_images.ad_id) 
+	WHERE  public.%[1]v.id = $1
+	GROUP BY public.%[1]v.id
+	ORDER BY %[1]v.last_updated ASC`
+	query = fmt.Sprintf(query, os.Getenv("postgres_dbname"))
 
 	row := db.QueryRow(query, id)
 	log.Println("Fetching ad", id, " from database")
@@ -239,7 +241,7 @@ func InsertAd(ad Ad) {
 	var id int
 
 	//prepare the query statement
-	query := `INSERT INTO ***REMOVED*** (
+	query := `INSERT INTO %[1]v (
 		title,
 		description,
 		city,
@@ -254,6 +256,8 @@ func InsertAd(ad Ad) {
 		garages,		  
 		rent_by_owner   
 		) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`
+
+	query = fmt.Sprintf(query, os.Getenv("postgres_dbname"))
 
 	//execute the statement adding the values from the ad and return the id of the newly created ad
 	err = db.QueryRow(
@@ -287,7 +291,7 @@ func DeleteAd(index int) {
 	checkErr(err, "fatal")
 
 	//prepare the query string
-	query := "DELETE FROM ***REMOVED*** where id = $1"
+	query := "DELETE FROM %[1]v where id = $1"
 
 	//execute the query
 	_, err = db.Exec(query, index)

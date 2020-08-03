@@ -2,7 +2,9 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/lib/pq"
 	"gitlab.com/jebo87/makako-grpc/ads"
@@ -17,38 +19,40 @@ func GetUserListings(db *sql.DB, userID string) (adList *ads.AdList, err error) 
 	if err := db.Ping(); err != nil {
 		log.Fatal(err)
 	}
-	query := `SELECT public.***REMOVED***.id, 
-	public.***REMOVED***.title, 
-	public.***REMOVED***.description, 
-	public.***REMOVED***.city, 
-	public.***REMOVED***.country, 
-	public.***REMOVED***.price, 
-	public.***REMOVED***.last_updated, 
-	public.***REMOVED***.rooms, 
-	public.***REMOVED***.property_type, 
-	public.***REMOVED***.userad_id, 
-	public.***REMOVED***.pets, 
-	public.***REMOVED***.furnished, 
-	public.***REMOVED***.garages, 
-	public.***REMOVED***.rent_by_owner, 
-	public.***REMOVED***.published,
-	public.***REMOVED***.last_updated,
-	public.***REMOVED***.featured,
-	public.***REMOVED***.lat,
-	public.***REMOVED***.lon,
-	public.***REMOVED***.bathrooms,
-	public.***REMOVED***.view_count,
-	public.***REMOVED***.street,
-	public.***REMOVED***.postal_code,
-	public.***REMOVED***.state_province,
-	public.***REMOVED***.neighborhood,
-	public.***REMOVED***.house_number,
+	query := `SELECT public.%[1]v.id, 
+	public.%[1]v.title, 
+	public.%[1]v.description, 
+	public.%[1]v.city, 
+	public.%[1]v.country, 
+	public.%[1]v.price, 
+	public.%[1]v.last_updated, 
+	public.%[1]v.rooms, 
+	public.%[1]v.property_type, 
+	public.%[1]v.userad_id, 
+	public.%[1]v.pets, 
+	public.%[1]v.furnished, 
+	public.%[1]v.garages, 
+	public.%[1]v.rent_by_owner, 
+	public.%[1]v.published,
+	public.%[1]v.last_updated,
+	public.%[1]v.featured,
+	public.%[1]v.lat,
+	public.%[1]v.lon,
+	public.%[1]v.bathrooms,
+	public.%[1]v.view_count,
+	public.%[1]v.street,
+	public.%[1]v.postal_code,
+	public.%[1]v.state_province,
+	public.%[1]v.neighborhood,
+	public.%[1]v.house_number,
 	array_remove(array_agg(public.ad_images.path),NULL) as images 
-	FROM public.***REMOVED*** 
-	LEFT OUTER JOIN public.ad_images ON (public.***REMOVED***.id = public.ad_images.ad_id) 
-	WHERE  public.***REMOVED***.userad_id = $1
-	GROUP BY public.***REMOVED***.id
-	ORDER BY ***REMOVED***.last_updated ASC`
+	FROM public.%[1]v 
+	LEFT OUTER JOIN public.ad_images ON (public.%[1]v.id = public.ad_images.ad_id) 
+	WHERE  public.%[1]v.userad_id = $1
+	GROUP BY public.%[1]v.id
+	ORDER BY %[1]v.last_updated ASC`
+	query = fmt.Sprintf(query, os.Getenv("postgres_dbname"))
+
 	log.Println(query)
 	rows, err := db.Query(query, userID)
 	if err != nil {
