@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"gitlab.com/jebo87/makako-api/repository"
 	"gitlab.com/jebo87/makako-gateway/httputils"
@@ -40,6 +41,22 @@ func main() {
 		log.Panic(err)
 	}
 	defer db.Close()
+	db.SetConnMaxLifetime(-1)
+
+	go func(currentDB *sql.DB) {
+		for {
+			select {
+			case <-time.After(90 * time.Second):
+				err := currentDB.Ping()
+				if err != nil {
+					log.Println("Problem connecting to database.")
+				} else {
+					log.Println("Connectiong with DB - OK")
+				}
+			}
+
+		}
+	}(db)
 
 	// create a listener on TCP port 7777
 	var listener net.Listener

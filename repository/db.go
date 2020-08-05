@@ -143,7 +143,7 @@ func GetAdListPB(db *sql.DB, offset int, limit int) (*ads.AdList, error) {
 //GetAdPB returns the ad matching given ID
 func GetAdPB(db *sql.DB, id string) (*ads.Ad, error) {
 	if err := db.Ping(); err != nil {
-		log.Panic(err)
+		log.Println("Ping failed", err)
 	}
 	//modify the query depending on the number of ads to display
 	query := `SELECT public.%[1]v.id, 
@@ -181,6 +181,7 @@ func GetAdPB(db *sql.DB, id string) (*ads.Ad, error) {
 	query = fmt.Sprintf(query, os.Getenv("postgres_dbname"))
 
 	row := db.QueryRow(query, id)
+
 	log.Println("Fetching ad", id, " from database")
 
 	//var myTime time.Time
