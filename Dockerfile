@@ -19,8 +19,7 @@ WORKDIR $GOPATH/src/gitlab.com/jebo87/makako-api/
 COPY . .
 
 # Fetch dependencies.
-# Using go get.
-RUN go get -d -v 
+RUN go mod download
 # Build the binary.
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /makako-api/bin/makako-api
 
