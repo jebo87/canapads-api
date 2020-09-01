@@ -79,8 +79,10 @@ func prepareQueryParam(searchTerm string) string {
 	}
 	return queryParam
 }
-func prepareBody(searchTerm string, filters map[string]string, fromSize map[string]string, priceRange string) string {
-	//adList := &ads.AdList{}
+
+//prepareBody Preparse the json body to be submited to elastic
+//the query is prepared depending on the filters received from the gateway
+func prepareBody(searchTerm string, singleValuefilters map[string]string, fromSize map[string]string, priceRange string, polygonFilter string) string {
 
 	queryParam := prepareQueryParam(searchTerm)
 
@@ -94,8 +96,7 @@ func prepareBody(searchTerm string, filters map[string]string, fromSize map[stri
 		"price",
 		"last_updated",
 		"images",
-		"lat",
-		"lon"
+		"location"
 	],
 	"from": %v,
 	"size": %v,
@@ -112,17 +113,57 @@ func prepareBody(searchTerm string, filters map[string]string, fromSize map[stri
 
 	var terms []string
 
-	for k, v := range filters {
+	for k, v := range singleValuefilters {
 		terms = append(terms, fmt.Sprintf(`{"term": {"%v": %v}}`, k, v))
 	}
 
-	terms = append(terms, priceRange)
+	//this validation is needed to parsing issues when the polygon filter is empty
+	if polygonFilter != "" {
+		terms = append(terms, priceRange, polygonFilter)
+	} else {
+		terms = append(terms, priceRange)
 
+	}
+	//put everything into the json to be sent.
 	body := fmt.Sprintf(search, fromSize["from"], fromSize["size"], queryParam, strings.Join(terms, ","))
 	log.Printf("[%v] Query object sent to elastic:", remoteAddres)
-
+	//print the json in the console for troubleshooting purposes
 	log.Println("\n", httputils.JSONPrettyPrint(body))
 	return body
+}
+
+func preparePolygonFilter(filter *ads.Filter) string {
+	coordinates := ""
+	if len(filter.GetPolygon().GetPoints()) > 0 {
+
+		for i, v := range filter.GetPolygon().GetPoints() {
+
+			coordinates += fmt.Sprintf(`
+			{
+				"lon":%v,
+				"lat":%v
+			}`, v.Lon, v.Lat)
+			if i < len(filter.GetPolygon().GetPoints())-1 {
+				coordinates += ","
+			}
+		}
+
+	} else {
+		return ""
+	}
+	polygonFilter := `
+	{
+		"geo_polygon": {
+			"location": {
+				"points": [
+					%v
+				]
+			}
+		}
+	}
+	`
+
+	return fmt.Sprintf(polygonFilter, coordinates)
 }
 
 func preparePriceRangeFilter(filter *ads.Filter) string {
@@ -223,8 +264,9 @@ func GetAdListElastic(filter *ads.Filter) (*ads.AdList, error) {
 	singleValueFilters := prepareSingleValueFilters(filter)
 	fromSizeFilter := prepareFromSizeFilter(filter)
 	priceRange := preparePriceRangeFilter(filter)
+	polygonFilter := preparePolygonFilter(filter)
 
-	prepareBody(filter.GetSearchParam().GetValue(), singleValueFilters, fromSizeFilter, priceRange)
+	prepareBody(filter.GetSearchParam().GetValue(), singleValueFilters, fromSizeFilter, priceRange, polygonFilter)
 	adList := &ads.AdList{}
 	//get the results from elastic search
 	//this needs to be changed for POST using the query parameters.
@@ -282,14 +324,16 @@ func GetAdListElastic(filter *ads.Filter) (*ads.AdList, error) {
 
 //SearchElastic serach in elastic search
 func SearchElastic(filter *ads.Filter, remoteAddr string) (*ads.SearchResponse, error) {
+	//log.Println(filter)
 	remoteAddres = remoteAddr
 	//this map will contain all the applicable filters received in the request
 	//we must validate each type of filter to be able to set them properly for elasticSearch
 	myFilterMap := prepareSingleValueFilters(filter)
 	fromSize := prepareFromSizeFilter(filter)
 	priceRange := preparePriceRangeFilter(filter)
+	polygonFilter := preparePolygonFilter(filter)
 
-	requestBody := []byte(prepareBody(filter.GetSearchParam().GetValue(), myFilterMap, fromSize, priceRange))
+	requestBody := []byte(prepareBody(filter.GetSearchParam().GetValue(), myFilterMap, fromSize, priceRange, polygonFilter))
 	adList := &ads.AdList{}
 	searchResponse := &ads.SearchResponse{}
 	var err error

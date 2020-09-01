@@ -68,6 +68,10 @@ gitlab.com/jebo87/makako-grpc v0.3.3 h1:ctduObBKKHNaIRyMqqcy77Yo8G9gH0H1DC9DgIF8
 gitlab.com/jebo87/makako-grpc v0.3.3/go.mod h1:oKcsE9xaCXDNB9QnsJVp7qLLq3E4ugE1lJAH03qZgDU=
 gitlab.com/jebo87/makako-grpc v0.3.4 h1:uJgtunpWJbpEzq7NKgw9XlvoBrrPXWRcHe0HXwuvTPo=
 gitlab.com/jebo87/makako-grpc v0.3.4/go.mod h1:oKcsE9xaCXDNB9QnsJVp7qLLq3E4ugE1lJAH03qZgDU=
+gitlab.com/jebo87/makako-grpc v0.3.5-0.20200830233026-5857bab8a067 h1:8Mcvf1Wa+RQa/ExH6Jkzhdm36QnyDTCBKjnnjJlzZD8=
+gitlab.com/jebo87/makako-grpc v0.3.5-0.20200830233026-5857bab8a067/go.mod h1:oKcsE9xaCXDNB9QnsJVp7qLLq3E4ugE1lJAH03qZgDU=
+gitlab.com/jebo87/makako-grpc v0.3.5-0.20200901025324-e5184426adfd h1:ztaMwK38LJKzPA4JxpVAMrCsatBktqJ62KXB6T1NWEg=
+gitlab.com/jebo87/makako-grpc v0.3.5-0.20200901025324-e5184426adfd/go.mod h1:oKcsE9xaCXDNB9QnsJVp7qLLq3E4ugE1lJAH03qZgDU=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/exp v0.0.0-20190121172915-509febef88a4/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
