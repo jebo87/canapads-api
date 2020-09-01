@@ -50,8 +50,6 @@ func main() {
 				err := currentDB.Ping()
 				if err != nil {
 					log.Println("Problem connecting to database.")
-				} else {
-					log.Println("Connectiong with DB - OK")
 				}
 			}
 

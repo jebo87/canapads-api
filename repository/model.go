@@ -1,10 +1,42 @@
 package repository
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"strconv"
 
 	"gitlab.com/jebo87/makako-grpc/ads"
 )
+
+// Location basic structure
+type Location struct {
+	Lat float64 `json:"lat"`
+	Lon float64 `json:"lon"`
+}
+
+func (s Location) Value() (driver.Value, error) {
+
+	return fmt.Sprintf(`{lat:"%v",lon:"%v"}`, s.Lat, s.Lon), nil
+}
+
+func (s *Location) Scan(src interface{}) (err error) {
+	var location Location
+	switch src.(type) {
+	case string:
+		err = json.Unmarshal([]byte(src.(string)), &location)
+	case []byte:
+		err = json.Unmarshal(src.([]byte), &location)
+	default:
+		return errors.New("Incompatible type for location")
+	}
+	if err != nil {
+		return
+	}
+	*s = location
+	return nil
+}
 
 // Ad basic structure
 type Ad struct {
@@ -25,8 +57,7 @@ type Ad struct {
 	Published     bool     `json:"published"`
 	LastUpdated   string   `json:"last_updated"`
 	Featured      int      `json:"featured"`
-	Lat           float64  `json:"lat"`
-	Lon           float64  `json:"lon"`
+	Location      Location `json:"location"`
 	Bathrooms     int      `json:"bathrooms"`
 	ViewCount     int      `json:"view_count"`
 	Street        string   `json:"street"`
@@ -37,6 +68,40 @@ type Ad struct {
 	Gym           bool     `json:"gym"`
 	Pool          bool     `json:"pool"`
 	Images        []string `json:"images"`
+}
+
+type Filter struct {
+	Title             string  `json:"title"`
+	Description       string  `json:"description"`
+	City              string  `json:"city"`
+	Country           string  `json:"country"`
+	PriceLow          int     `json:"price_low"`
+	PriceHigh         int     `json:"price_high"`
+	PublishedDateLow  string  `json:"published_date_low"`
+	PublishedDateHigh string  `json:"published_date_high"`
+	RoomsLow          int     `json:"rooms_low"`
+	RoomsHigh         int     `json:"rooms_high"`
+	PropertyType      string  `json:"property_type"`
+	Pets              int     `json:"pets"`
+	Furnished         bool    `json:"furnished"`
+	Garages           int     `json:"garages"`
+	RentByOwner       bool    `json:"rent_by_owner"`
+	Lat               string  `json:"lat"`
+	Lon               string  `json:"lon"`
+	Bathrooms         int     `json:"bathrooms"`
+	PostalCode        string  `json:"postal_code"`
+	StateProvince     string  `json:"state_province"`
+	Neighborhood      string  `json:"neighborhood"`
+	Gym               bool    `json:"gym"`
+	Pool              bool    `json:"pool"`
+	HasImages         bool    `json:"hasImages"`
+	From              int     `json:"from"`
+	Size              int     `json:"size"`
+	SearchParam       string  `json:"searchParam"`
+	Points            Polygon `json:"points"`
+}
+type Polygon struct {
+	points []Location
 }
 
 //AdToString returns a string for the ad
@@ -62,8 +127,7 @@ func ToProto(ad Ad, pb *ads.Ad) *ads.Ad {
 	pb.RentByOwner = ad.RentByOwner
 	pb.Published = ad.Published
 	pb.Featured = int32(ad.Featured)
-	pb.Lat = float64(ad.Lat)
-	pb.Lon = float64(ad.Lon)
+	pb.Location = &ads.Location{Lat: ad.Location.Lat, Lon: ad.Location.Lon}
 	pb.Bathrooms = int32(ad.Bathrooms)
 	pb.ViewCount = int32(ad.ViewCount)
 	pb.Street = ad.Street

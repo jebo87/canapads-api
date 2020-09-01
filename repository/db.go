@@ -115,8 +115,7 @@ func GetAdListPB(db *sql.DB, offset int, limit int) (*ads.AdList, error) {
 			&ad.Published,
 			&ad.LastUpdated,
 			&ad.Featured,
-			&ad.Lat,
-			&ad.Lon,
+			&ad.Location,
 			&ad.Bathrooms,
 			&ad.ViewCount,
 			&ad.Street,
@@ -145,7 +144,9 @@ func GetAdPB(db *sql.DB, id string) (*ads.Ad, error) {
 	if err := db.Ping(); err != nil {
 		log.Println("Ping failed", err)
 	}
-	//modify the query depending on the number of ads to display
+
+	 
+	
 	query := `SELECT public.%[1]v.id, 
 	public.%[1]v.title, 
 	public.%[1]v.description, 
@@ -163,8 +164,7 @@ func GetAdPB(db *sql.DB, id string) (*ads.Ad, error) {
 	public.%[1]v.published,
 	public.%[1]v.last_updated,
 	public.%[1]v.featured,
-	public.%[1]v.lat,
-	public.%[1]v.lon,
+	json_build_object('lat',public.%[1]v.lat, 'lon', public.%[1]v.lon) as location, 
 	public.%[1]v.bathrooms,
 	public.%[1]v.view_count,
 	public.%[1]v.street,
@@ -185,8 +185,8 @@ func GetAdPB(db *sql.DB, id string) (*ads.Ad, error) {
 	log.Println("Fetching ad", id, " from database")
 
 	//var myTime time.Time
-	var ad ads.Ad
-	err := row.Scan(&ad.Id,
+	var ad Ad
+	err := row.Scan(&ad.ID,
 		&ad.Title,
 		&ad.Description,
 		&ad.City,
@@ -195,7 +195,7 @@ func GetAdPB(db *sql.DB, id string) (*ads.Ad, error) {
 		&ad.PublishedDate,
 		&ad.Rooms,
 		&ad.PropertyType,
-		&ad.UserdadId,
+		&ad.UserAdID,
 		&ad.Pets,
 		&ad.Furnished,
 		&ad.Garages,
@@ -203,8 +203,7 @@ func GetAdPB(db *sql.DB, id string) (*ads.Ad, error) {
 		&ad.Published,
 		&ad.LastUpdated,
 		&ad.Featured,
-		&ad.Lat,
-		&ad.Lon,
+		&ad.Location,
 		&ad.Bathrooms,
 		&ad.ViewCount,
 		&ad.Street,
@@ -214,19 +213,21 @@ func GetAdPB(db *sql.DB, id string) (*ads.Ad, error) {
 		&ad.HouseNumber,
 		(*pq.StringArray)(&ad.Images))
 
+		
+
 	if err != nil {
-		log.Println(err)
-		return &ad, errors.New("Ad not found")
+		log.Println("error while trying to scan",err)
+		return &ads.Ad{}, errors.New("Ad not found")
 	}
+	
 
 	//ad.PublishedDate = parseDate(ad.PublishedDate, &myTime)
 	log.Println("returning ad ", id, " ", ad.Title, " ", ad.PublishedDate)
-	if ad.Id == 0 {
-
-		return &ad, errors.New("Ad not found")
+	if ad.ID == 0 {
+		return &ads.Ad{}, errors.New("Ad not found")
 	}
 
-	return &ad, err
+	return ToProto(ad, &ads.Ad{}), err
 
 }
 
