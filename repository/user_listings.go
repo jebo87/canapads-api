@@ -36,8 +36,7 @@ func GetUserListings(db *sql.DB, userID string) (adList *ads.AdList, err error) 
 	public.%[1]v.published,
 	public.%[1]v.last_updated,
 	public.%[1]v.featured,
-	public.%[1]v.lat,
-	public.%[1]v.lon,
+	json_build_object('lat',public.%[1]v.lat, 'lon', public.%[1]v.lon) as location, 
 	public.%[1]v.bathrooms,
 	public.%[1]v.view_count,
 	public.%[1]v.street,
@@ -62,8 +61,8 @@ func GetUserListings(db *sql.DB, userID string) (adList *ads.AdList, err error) 
 
 	var tempList []*ads.Ad
 	for rows.Next() {
-		var ad ads.Ad
-		err = rows.Scan(&ad.Id,
+		var ad Ad
+		err = rows.Scan(&ad.ID,
 			&ad.Title,
 			&ad.Description,
 			&ad.City,
@@ -72,7 +71,7 @@ func GetUserListings(db *sql.DB, userID string) (adList *ads.AdList, err error) 
 			&ad.PublishedDate,
 			&ad.Rooms,
 			&ad.PropertyType,
-			&ad.UserdadId,
+			&ad.UserAdID,
 			&ad.Pets,
 			&ad.Furnished,
 			&ad.Garages,
@@ -95,8 +94,8 @@ func GetUserListings(db *sql.DB, userID string) (adList *ads.AdList, err error) 
 			return nil, err
 		}
 
-		tempList = append(tempList, &ad)
-		log.Println(ad.Id)
+		tempList = append(tempList, ToProto(ad, &ads.Ad{}))
+
 	}
 	list.Ads = tempList
 	return &list, nil
