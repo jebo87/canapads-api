@@ -240,6 +240,13 @@ func prepareSingleValueFilters(filter *ads.Filter) map[string]string {
 	if filter.GetGarages() != nil {
 		myFilterMap["garages"] = fmt.Sprintf("%v", filter.GetGarages().GetValue())
 	}
+	if filter.GetRooms() != nil {
+		myFilterMap["rooms"] = fmt.Sprintf("%v", filter.GetRooms().GetValue())
+	}
+
+	if filter.GetBathrooms() != nil {
+		myFilterMap["bathrooms"] = fmt.Sprintf("%v", filter.GetBathrooms().GetValue())
+	}
 
 	// google.protobuf.StringValue lat = 16;
 	// google.protobuf.StringValue lon = 17;
