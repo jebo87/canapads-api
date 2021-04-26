@@ -262,73 +262,6 @@ func prepareSingleValueFilters(filter *ads.Filter) map[string]string {
 	return myFilterMap
 }
 
-//GetAdListElastic this returns the ads.
-//Pagination can be done using offset and limit
-func GetAdListElastic(filter *ads.Filter) (*ads.AdList, error) {
-
-	//this map will contain all the applicable filters received in the request
-	//we must validate each type of filter to be able to set them properly for elasticSearch
-	singleValueFilters := prepareSingleValueFilters(filter)
-	fromSizeFilter := prepareFromSizeFilter(filter)
-	priceRange := preparePriceRangeFilter(filter)
-	polygonFilter := preparePolygonFilter(filter)
-
-	prepareBody(filter.GetSearchParam().GetValue(), singleValueFilters, fromSizeFilter, priceRange, polygonFilter)
-	adList := &ads.AdList{}
-	//get the results from elastic search
-	//this needs to be changed for POST using the query parameters.
-	// var prueba = `-d {"sort": [{ "field1": { "order": "desc" }},{ "field2": { "order": "desc" }}],"size": 100}`
-	var err error
-	var resp *http.Response
-
-	resp, err = http.Get("http://" + os.Getenv("elastic.host") + ":" + os.Getenv("elastic.port") + "/ads/ad/_search?from=" + strconv.Itoa(int(filter.From.GetValue())) + "&size=" + strconv.Itoa(int(filter.Size.GetValue())))
-	log.Println("http://" + os.Getenv("elastic.host") + ":" + os.Getenv("elastic.port") + "/ads/ad/_search?from=" + strconv.Itoa(int(filter.From.GetValue())) + "m&size=" + strconv.Itoa(int(filter.Size.GetValue())))
-
-	if err != nil {
-		log.Println(err)
-		return adList, err
-	}
-
-	if resp.StatusCode == 200 {
-		// params := make(map[string]string)
-		// params["sort"]=[{''}]
-		// http.NewRequest("GET","http://" + conf.Elastic.Host + ":" + conf.Elastic.Port + "/ads/ad/_search",)
-
-		defer resp.Body.Close()
-		log.Println("Connected to Elastic...")
-		//create a struct to hold the values from the response
-		results := &elasticSearchAd{}
-
-		body, err := ioutil.ReadAll(resp.Body)
-		log.Println("Reading response from Elastic...")
-
-		err = json.Unmarshal(body, &results)
-		log.Println(fmt.Sprintf("took :%v, timed_out:%v ,hits: %v", results.Took, results.TimedOut, results.Hits.Total))
-		if err != nil {
-			panic(err)
-		}
-
-		adList.Ads = []*ads.Ad{}
-		log.Println("Translating ads to protobuf...")
-		//convert the ads to protobuf and add them to the adList that will be returned
-		for _, ad := range results.Hits.Hits {
-			adPB := &ads.Ad{}
-			adPB = ToProto(ad.Source, adPB)
-			adList.Ads = append(adList.Ads, adPB)
-
-		}
-		log.Println("done!")
-		return adList, nil
-	}
-	//TODO: return custom errors like the ones coming from elastic, this will help troubleshoot in case of problems
-	// {
-	// 	"error": "Incorrect HTTP method for uri [/ads/ad/?sort] and method [GET], allowed: [POST]",
-	// 	"status": 405
-	// 	}
-	return adList, errors.New("status" + strconv.Itoa(resp.StatusCode) + " MakakoLabs: There was a problem while procesing your request")
-
-}
-
 //SearchElastic serach in elastic search
 func SearchElastic(filter *ads.Filter, remoteAddr string) (*ads.SearchResponse, error) {
 	//log.Println(filter)
@@ -346,7 +279,7 @@ func SearchElastic(filter *ads.Filter, remoteAddr string) (*ads.SearchResponse, 
 	var err error
 	var req *http.Request
 
-	req, err = http.NewRequest("POST", "http://"+os.Getenv("elastic_host")+":"+os.Getenv("elastic_port")+"/_search", bytes.NewBuffer(requestBody))
+	req, _ = http.NewRequest("POST", "http://"+os.Getenv("elastic_host")+":"+os.Getenv("elastic_port")+"/_search", bytes.NewBuffer(requestBody))
 
 	req.Header.Set("Content-Type", "application/json")
 

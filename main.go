@@ -71,6 +71,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
+
+	defer listener.Close()
 	// create a server instance
 	var adsSer adsServer
 
@@ -120,12 +122,16 @@ func (adsServer) List(ctx context.Context, filter *ads.Filter) (*ads.SearchRespo
 	peerInfo, _ := peer.FromContext(ctx)
 	log.Printf("[%v] Remote gRPC Client", peerInfo.Addr)
 	md, _ := metadata.FromIncomingContext(ctx)
+	addresses := md["remote-addr"]
+	log.Println(addresses)
 	log.Printf("%v Procesing request from remote address", md["remote-addr"])
 	//from database:
 	// ads, err := repository.GetAdListPB(0, 0)
 
 	//from elastic search
-	ads, err := repository.SearchElastic(filter, md["remote-addr"][0])
+	log.Println(len(md["remote-addr"]))
+	// ads, err := repository.SearchElastic(filter, md["remote-addr"][0])
+	ads, err := repository.SearchElastic(filter, "ADD THE IP")
 
 	if err != nil {
 		log.Printf("%v Error %v", md["remote-addr"], err)
